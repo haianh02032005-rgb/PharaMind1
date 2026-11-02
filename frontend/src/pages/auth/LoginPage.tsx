@@ -40,8 +40,8 @@ export const LoginPage: React.FC = () => {
   const handleDemoSeedAndLogin = async () => {
     setError(null);
     setDemoLoading(true);
-    let demoEmail = "giadinh.pharmamind@example.com";
-    const demoPass = "PharmaMind123";
+    const demoEmail = "demo@pharmamind.vn";
+    const demoPass = "DemoPass123!";
     try {
       try {
         await authService.login({ email: demoEmail, password: demoPass });
@@ -50,231 +50,20 @@ export const LoginPage: React.FC = () => {
           await authService.register({
             email: demoEmail,
             password: demoPass,
-            full_name: "Nguyễn Văn An",
+            full_name: "Nguyễn Minh An (Demo)",
           });
+          await authService.login({ email: demoEmail, password: demoPass });
         } catch {
-          demoEmail = `giadinh.${Date.now().toString().slice(-5)}@example.com`;
-          await authService.register({
-            email: demoEmail,
-            password: demoPass,
-            full_name: "Nguyễn Văn An",
-          });
+          // If already exists or register fails, try logging in again
+          await authService.login({ email: demoEmail, password: demoPass });
         }
-        await authService.login({ email: demoEmail, password: demoPass });
       }
       await hydrate();
-      const families = await fetchFamilies();
-
-      if (families.length === 0) {
-        // Seed a realistic Vietnamese family with members, medications, schedules & 9-drawer cabinet
-        const fam = await useFamilyStore
-          .getState()
-          .createFamily(
-            "Gia đình Nguyễn Văn An",
-            "Tủ thuốc thông minh phòng khách"
-          );
-
-        const memMom = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/members`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              full_name: "Bà Nguyễn Thị Lan",
-              relationship_label: "Mẹ",
-              gender: "FEMALE",
-              date_of_birth: "1960-05-14",
-            }),
-          }
-        );
-
-        const memDad = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/members`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              full_name: "Ông Nguyễn Văn Minh",
-              relationship_label: "Bố",
-              gender: "MALE",
-              date_of_birth: "1958-09-20",
-            }),
-          }
-        );
-
-        // Add allergy to Amoxicillin for Bà Lan
-        await apiRequest(
-          `/families/${fam.id}/members/${memMom.id}/allergies`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              allergen: "Amoxicillin",
-              allergy_type: "DRUG",
-              severity: "SEVERE",
-              reaction_description: "Nổi mề đay, khó thở nhẹ",
-            }),
-          }
-        );
-
-        // Create 3 medications
-        const med1 = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/medications`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: "Amlodipine",
-              active_ingredient: "Amlodipine",
-              strength: "5mg",
-              dosage_form: "TABLET",
-              quantity: 28,
-              unit: "TABLET",
-              low_stock_threshold: 7,
-              expiration_date: "2028-10-30",
-            }),
-          }
-        );
-
-        const med2 = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/medications`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: "Paracetamol",
-              active_ingredient: "Paracetamol",
-              strength: "500mg",
-              dosage_form: "TABLET",
-              quantity: 4,
-              unit: "TABLET",
-              low_stock_threshold: 6,
-              expiration_date: "2028-06-15",
-            }),
-          }
-        );
-
-        const med3 = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/medications`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: "Amoxicillin",
-              active_ingredient: "Amoxicillin",
-              strength: "500mg",
-              dosage_form: "CAPSULE",
-              quantity: 16,
-              unit: "CAPSULE",
-              low_stock_threshold: 4,
-              expiration_date: "2028-12-31",
-            }),
-          }
-        );
-
-        // Link members
-        await apiRequest(
-          `/families/${fam.id}/medications/${med1.id}/members`,
-          {
-            method: "POST",
-            body: JSON.stringify({ member_id: memMom.id }),
-          }
-        );
-        await apiRequest(
-          `/families/${fam.id}/medications/${med2.id}/members`,
-          {
-            method: "POST",
-            body: JSON.stringify({ member_id: memDad.id }),
-          }
-        );
-        await apiRequest(
-          `/families/${fam.id}/medications/${med3.id}/members`,
-          {
-            method: "POST",
-            body: JSON.stringify({ member_id: memMom.id }),
-          }
-        );
-
-        // Create prescription & schedule
-        const rx = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/prescriptions`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              member_id: memMom.id,
-              title: "Đơn thuốc huyết áp định kỳ",
-              start_date: "2026-01-01",
-              end_date: "2028-12-31",
-            }),
-          }
-        );
-
-        const rxItem = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/prescriptions/${rx.id}/items`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              family_medication_id: med1.id,
-              dose_amount: 1,
-              dose_unit: "TABLET",
-              frequency_per_day: 2,
-              instructions: "Uống sau bữa sáng và bữa tối",
-            }),
-          }
-        );
-
-        await apiRequest(`/families/${fam.id}/schedules`, {
-          method: "POST",
-          body: JSON.stringify({
-            prescription_item_id: rxItem.id,
-            start_date: "2026-01-01",
-            end_date: "2028-12-31",
-            recurrence_type: "DAILY",
-            times: ["08:00", "20:00"],
-          }),
-        });
-
-        // Create Smart Cabinet & assign compartments 1, 5, 8
-        const cab = await apiRequest<{ id: number }>(
-          `/families/${fam.id}/cabinets`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: "Tủ thuốc Thông minh Phòng khách",
-              device_code: `PM-DEMO-${Math.random()
-                .toString(36)
-                .substring(2, 7)
-                .toUpperCase()}`,
-            }),
-          }
-        );
-
-        await apiRequest(
-          `/families/${fam.id}/cabinets/${cab.id}/simulator/online`,
-          { method: "POST" }
-        );
-        await apiRequest(
-          `/families/${fam.id}/cabinets/${cab.id}/compartments/1/medication`,
-          {
-            method: "PUT",
-            body: JSON.stringify({ family_medication_id: med1.id }),
-          }
-        );
-        await apiRequest(
-          `/families/${fam.id}/cabinets/${cab.id}/compartments/5/medication`,
-          {
-            method: "PUT",
-            body: JSON.stringify({ family_medication_id: med2.id }),
-          }
-        );
-        await apiRequest(
-          `/families/${fam.id}/cabinets/${cab.id}/compartments/8/medication`,
-          {
-            method: "PUT",
-            body: JSON.stringify({ family_medication_id: med3.id }),
-          }
-        );
-
-        await fetchFamilies();
-      }
+      await fetchFamilies();
       navigate("/");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Không thể khởi tạo dữ liệu demo"
+        err instanceof Error ? err.message : "Không thể đăng nhập tài khoản demo"
       );
     } finally {
       setDemoLoading(false);
@@ -366,13 +155,23 @@ export const LoginPage: React.FC = () => {
             className="btn btn-secondary"
             disabled={loading || demoLoading}
             onClick={handleDemoSeedAndLogin}
-            style={{ width: "100%" }}
+            style={{ width: "100%", justifyContent: "center" }}
           >
             <Sparkles size={18} />
             {demoLoading
-              ? "Đang khởi tạo Gia đình & Tủ thuốc 3D mẫu..."
-              : "Trải nghiệm nhanh (Tự động nạp Gia đình & Tủ 3D mẫu)"}
+              ? "Đang vào không gian demo..."
+              : "Dùng thử ngay (Tài khoản & Dữ liệu 3D mẫu)"}
           </button>
+          <div
+            style={{
+              fontSize: "0.78rem",
+              color: "var(--pm-text-secondary)",
+              textAlign: "center",
+              marginTop: 6,
+            }}
+          >
+            Tài khoản mẫu: <strong>demo@pharmamind.vn</strong> / <strong>DemoPass123!</strong>
+          </div>
         </div>
 
         <div
