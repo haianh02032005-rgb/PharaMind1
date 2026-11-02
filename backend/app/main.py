@@ -30,11 +30,18 @@ app.include_router(api_router)
 frontend_dist = PROJECT_ROOT / "frontend" / "dist"
 frontend_index = frontend_dist / "index.html"
 if frontend_dist.is_dir():
-    app.mount(
-        "/assets",
-        StaticFiles(directory=frontend_dist / "assets"),
-        name="frontend-assets",
-    )
+    if (frontend_dist / "assets").is_dir():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=frontend_dist / "assets"),
+            name="frontend-assets",
+        )
+    if (frontend_dist / "models").is_dir():
+        app.mount(
+            "/models",
+            StaticFiles(directory=frontend_dist / "models"),
+            name="frontend-models",
+        )
 
 
 @app.get("/")
@@ -75,4 +82,7 @@ def frontend_fallback(frontend_path: str):
         raise HTTPException(status_code=404, detail="Not found")
     if frontend_path.startswith(("auth/", "families/", "users/", "imports/", "ws/", "health/")):
         raise HTTPException(status_code=404, detail="Not found")
+    static_file = frontend_dist / frontend_path
+    if static_file.is_file():
+        return FileResponse(static_file)
     return FileResponse(frontend_index)

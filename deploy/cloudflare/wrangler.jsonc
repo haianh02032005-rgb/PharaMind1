@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "pharmamind-ai",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-02",
+  "containers": [
+    {
+      "class_name": "PharmaMindContainer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "dockerfile": "../../Dockerfile",
+          "build_context": "../.."
+        }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PHARMAMIND_CONTAINER",
+        "class_name": "PharmaMindContainer"
+      }
+    ]
+  },
+  "exports": {
+    "PharmaMindContainer": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "observability": {
+    "enabled": true
+  }
+}
