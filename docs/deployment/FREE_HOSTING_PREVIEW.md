@@ -13,9 +13,9 @@ Render assigns a hostname ending in `.onrender.com`. The exact hostname is confi
 
 ## Deploy steps
 
-1. Push this repository to a Git provider supported by Render. Do not include `.env`, `storage/imports/`, backups, or real health data.
+1. Open the **Deploy to Render** button in the repository README and sign in/connect the GitHub repository if prompted. Do not include `.env`, `storage/imports/`, backups, or real health data.
 2. Create a Supabase Free Postgres project for demo data. Copy its Session Pooler connection URL. Adapt the scheme for this application to `postgresql+psycopg://` and ensure `sslmode=require` is present. URL-encode special characters in the database password.
-3. In Render, create a Blueprint from the repository and select `render.yaml`. Enter the database URL when asked for the unsynchronized `DATABASE_URL` value.
+3. In Render, review the Blueprint resources. Enter the database URL when asked for the unsynchronized `DATABASE_URL` value. The Blueprint has automatic deploys disabled, so future Git pushes do not unexpectedly redeploy this preview.
 4. Wait for the Docker build and first Alembic migration. Open the Render service URL and confirm `/health` returns `{"status":"ok"}`.
 5. For a Flutter build, set `API_BASE_URL` to the exact Render URL using `--dart-define`; production builds must use HTTPS.
 
