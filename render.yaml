@@ -22,4 +22,13 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: pharmamind-ai-demo-db
+          property: connectionString
+
+databases:
+  - name: pharmamind-ai-demo-db
+    plan: free
+    region: singapore
+    databaseName: pharmamind
+    user: pharmamind

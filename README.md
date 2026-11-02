@@ -10,7 +10,7 @@ Hệ thống quản lý thuốc gia đình với **Digital Twin 3D** tủ thuố
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/haianh02032005-rgb/PharaMind1)
 
-Render sẽ hỏi `DATABASE_URL` trong bước tạo Blueprint. Dùng connection string PostgreSQL riêng tư từ Supabase; không commit chuỗi này vào Git.
+Blueprint tự tạo PostgreSQL Free và nối `DATABASE_URL` cho backend; không cần nhập database secret trong bước deploy.
 
 ## Yêu cầu
 

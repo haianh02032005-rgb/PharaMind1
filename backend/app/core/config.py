@@ -33,6 +33,21 @@ class Settings(BaseSettings):
                 return False
         return value
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_postgres_driver(cls, value: object) -> object:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                "DATABASE_URL is required. Deploy the Render Blueprint so it can "
+                "create and connect the PostgreSQL database."
+            )
+        url = value.strip()
+        if url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url.removeprefix("postgres://")
+        if url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + url.removeprefix("postgresql://")
+        return url
+
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
         if not self.debug:
