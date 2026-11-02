@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environment
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+
+# Python packaging
+*.egg-info/
+
+# Private prescription uploads and generated mobile/web artifacts
+/storage/imports/
+/mobile/.dart_tool/
+/mobile/build/
+/frontend/node_modules/
+/frontend/dist/

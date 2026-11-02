@@ -1,0 +1,2 @@
+# Backend dependencies are managed at the repository root.
+-r ../requirements.txt

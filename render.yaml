@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pharmamind-ai-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: PharmaMind AI
+      - key: APP_VERSION
+        value: 0.1.0
+      - key: DEBUG
+        value: "false"
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Ho_Chi_Minh
+      - key: CORS_ORIGINS
+        value: "[]"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

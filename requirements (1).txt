@@ -1,0 +1,53 @@
+# PharmaMind AI - Backend MVP
+# Recommended Python: 3.12.x
+# Tested design target: CPython 3.12
+#
+# Install:
+#   python -m venv .venv
+#   Windows: .venv\Scripts\activate
+#   Linux/macOS: source .venv/bin/activate
+#   python -m pip install --upgrade pip
+#   pip install -r requirements.txt
+
+# ---------------------------------------------------------
+# Web API
+# ---------------------------------------------------------
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+
+# ---------------------------------------------------------
+# Validation / configuration
+# ---------------------------------------------------------
+pydantic==2.14.2
+pydantic-settings==2.16.2
+
+# ---------------------------------------------------------
+# Database - PostgreSQL
+# ---------------------------------------------------------
+SQLAlchemy==2.1.6
+psycopg[binary,pool]==3.3.6
+alembic==1.20.1
+
+# ---------------------------------------------------------
+# Authentication / security
+# ---------------------------------------------------------
+PyJWT[crypto]==2.15.1
+argon2-cffi==25.1.0
+
+# ---------------------------------------------------------
+# Forms / file uploads
+# Needed later for prescription images, medical documents,
+# medicine photos, avatar uploads, etc.
+# ---------------------------------------------------------
+python-multipart==0.0.32
+
+# ---------------------------------------------------------
+# HTTP client
+# Useful for tests and later external medicine/AI APIs
+# ---------------------------------------------------------
+httpx==0.28.1
+
+# ---------------------------------------------------------
+# Testing
+# ---------------------------------------------------------
+pytest==9.2.0
