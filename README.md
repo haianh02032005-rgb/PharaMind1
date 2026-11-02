@@ -12,6 +12,10 @@ Hệ thống quản lý thuốc gia đình với **Digital Twin 3D** tủ thuố
 
 Blueprint tự tạo PostgreSQL Free và nối `DATABASE_URL` cho backend; không cần nhập database secret trong bước deploy.
 
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&builder=dockerfile&repository=github.com%2Fhaianh02032005-rgb%2FPharaMind1&branch=main&name=pharmamind-ai&dockerfile=Dockerfile&ports=8000%3Bhttp%3B%2F&instance_type=free)
+
+Hướng dẫn Koyeb + Neon (gói miễn phí, cần tạo database và nhập hai secrets): [deploy/koyeb/README.md](deploy/koyeb/README.md).
+
 ## Yêu cầu
 
 - Python **3.12.x** (xem `.python-version`)

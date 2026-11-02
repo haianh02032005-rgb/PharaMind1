@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     def normalize_postgres_driver(cls, value: object) -> object:
         if not isinstance(value, str) or not value.strip():
             raise ValueError(
-                "DATABASE_URL is required. Deploy the Render Blueprint so it can "
-                "create and connect the PostgreSQL database."
+                "DATABASE_URL is required. Set it to a PostgreSQL connection string "
+                "before starting the API."
             )
         url = value.strip()
         if url.startswith("postgres://"):
