@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PharmaMind AI">
+  <defs>
+    <linearGradient id="pm" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2e9c95"/>
+      <stop offset="1" stop-color="#6bc5b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="#f7fafa"/>
+  <rect x="48" y="48" width="416" height="416" rx="104" fill="url(#pm)"/>
+  <path d="M148 342V170h70c44 0 72 25 72 64 0 40-29 66-74 66h-25v42h-43Zm43-79h23c21 0 32-10 32-28 0-17-11-27-31-27h-24v55Z" fill="#fff"/>
+  <path d="M294 342V170h43l40 73 39-73h43v172h-42v-99l-27 52h-27l-27-52v99h-42Z" fill="#fff"/>
+</svg>

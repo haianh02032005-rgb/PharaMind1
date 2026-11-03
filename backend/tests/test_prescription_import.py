@@ -182,6 +182,7 @@ def test_prescription_import_ocr_excel_scenarios():
                 "confirm_import_mode": "CREATE_NEW_PRESCRIPTION",
                 "confirm_schedule_creation": True,
                 "confirm_health_updates": False,
+                "confirm_ocr_review": True,
             },
         )
         assert blocked_commit.status_code == 409
@@ -212,6 +213,7 @@ def test_prescription_import_ocr_excel_scenarios():
                 "confirm_import_mode": "CREATE_NEW_PRESCRIPTION",
                 "confirm_schedule_creation": True,
                 "confirm_health_updates": False,
+                "confirm_ocr_review": True,
             },
         )
         assert commit_ocr.status_code == 200
@@ -239,6 +241,7 @@ def test_prescription_import_ocr_excel_scenarios():
                     "dose_amount": 1.0,
                     "dose_unit": "tablet",
                     "frequency_per_day": 2.0,
+                    "route": "ORAL",
                     "schedule_times": ["08:00", "20:00"],
                 }
             ],
@@ -362,6 +365,7 @@ def test_prescription_import_ocr_excel_scenarios():
                     "dose_amount": 1.0,
                     "dose_unit": "tablet",
                     "frequency_per_day": 1.0,
+                    "route": "ORAL",
                     "schedule_times": ["08:00"],
                 }
             ],
@@ -399,6 +403,7 @@ def test_prescription_import_ocr_excel_scenarios():
                 "confirm_import_mode": "UPDATE_EXISTING_PRESCRIPTION",
                 "confirm_schedule_creation": True,
                 "confirm_health_updates": False,
+                "confirm_ocr_review": True,
             },
         )
         assert upd_commit.status_code == 200
@@ -440,6 +445,7 @@ def test_prescription_import_ocr_excel_scenarios():
                     "dose_amount": 1.0,
                     "dose_unit": "tablet",
                     "frequency_per_day": 1.0,
+                    "route": "ORAL",
                     "schedule_times": ["20:00"],
                 }
             ],
@@ -496,6 +502,7 @@ def test_prescription_import_ocr_excel_scenarios():
                 "confirm_import_mode": "CREATE_NEW_PRESCRIPTION",
                 "confirm_schedule_creation": True,
                 "confirm_health_updates": True,
+                "confirm_ocr_review": True,
             },
         )
         assert h_commit.status_code == 200
@@ -541,6 +548,7 @@ def test_prescription_import_ocr_excel_scenarios():
                 "confirm_import_mode": "CREATE_NEW_PRESCRIPTION",
                 "confirm_schedule_creation": True,
                 "confirm_health_updates": False,
+                "confirm_ocr_review": True,
                 "simulate_failure": True,
             },
         )

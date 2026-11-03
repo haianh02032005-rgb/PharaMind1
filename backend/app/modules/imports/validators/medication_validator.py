@@ -8,6 +8,8 @@ from backend.app.modules.imports.normalizers.medication_normalizer import (
 
 def validate_medication_items(
     med_items: list[dict[str, Any]],
+    *,
+    require_route: bool = False,
 ) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
 
@@ -84,6 +86,17 @@ def validate_medication_items(
                     "field_path": f"items[{idx}].dose_unit",
                     "message": f"Dòng thuốc #{idx + 1}: Thiếu đơn vị liều dùng (dose_unit).",
                     "suggested_fix": "Chọn đơn vị liều dùng (tablet, capsule, ml...).",
+                }
+            )
+
+        if require_route and not (item.get("route") or "").strip():
+            issues.append(
+                {
+                    "severity": ValidationSeverity.ERROR.value,
+                    "code": "MISSING_ROUTE",
+                    "field_path": f"items[{idx}].route",
+                    "message": f"Dòng thuốc #{idx + 1} ('{med_name or 'Chưa rõ'}'): OCR chưa xác định được đường dùng.",
+                    "suggested_fix": "Chọn đường dùng đúng theo đơn: uống, tiêm, bôi, hít/xịt, mắt, tai hoặc mũi.",
                 }
             )
 

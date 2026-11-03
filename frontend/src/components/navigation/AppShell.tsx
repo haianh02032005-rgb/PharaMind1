@@ -14,6 +14,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+import { PwaInstallButton } from "../pwa/PwaInstallButton";
 import { useAuthStore } from "../../store/authStore";
 import { useFamilyStore } from "../../store/familyStore";
 import { useUiStore } from "../../store/uiStore";
@@ -105,6 +106,7 @@ export const AppShell: React.FC = () => {
             gap: 10,
           }}
         >
+          <PwaInstallButton />
           <div style={{ fontSize: "0.84rem" }}>
             <div style={{ fontWeight: 600 }}>{user?.full_name || "Người dùng"}</div>
             <div style={{ color: "var(--pm-text-secondary)", fontSize: "0.78rem" }}>

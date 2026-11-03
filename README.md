@@ -7,6 +7,7 @@ Hệ thống quản lý thuốc gia đình với **Digital Twin 3D** tủ thuố
 > [docs/architecture/](docs/architecture/), [docs/tasks/](docs/tasks/).
 > Trạng thái trước phát hành app: [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
 > Hướng dẫn preview trên tên miền miễn phí: [docs/deployment/FREE_HOSTING_PREVIEW.md](docs/deployment/FREE_HOSTING_PREVIEW.md).
+> Khắc phục và chạy qua Cloudflare Tunnel: [docs/deployment/CLOUDFLARE_TUNNEL.md](docs/deployment/CLOUDFLARE_TUNNEL.md).
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/haianh02032005-rgb/PharaMind1)
 

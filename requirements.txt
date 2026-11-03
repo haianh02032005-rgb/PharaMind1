@@ -41,6 +41,15 @@ argon2-cffi==25.1.0
 # ---------------------------------------------------------
 python-multipart==0.0.32
 
+# S3-compatible storage for durable private prescription uploads (e.g. R2)
+boto3==1.43.123
+
+# Private local OCR for prescription images and scanned PDFs
+Pillow==13.0.0
+pytesseract==0.3.13
+pypdf==6.21.4
+pdf2image==1.17.0
+
 # ---------------------------------------------------------
 # HTTP client
 # Useful for tests and later external medicine/AI APIs

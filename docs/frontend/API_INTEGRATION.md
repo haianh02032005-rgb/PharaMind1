@@ -1,8 +1,11 @@
 # PharmaMind AI — API & Realtime Integration Guide
 
 ## 1. Cấu hình Base URL
-- **REST API**: `VITE_API_BASE_URL` (mặc định `http://localhost:8000`)
-- **WebSocket**: `VITE_WS_BASE_URL` (mặc định `ws://localhost:8000`)
+- **REST API**: `VITE_API_BASE_URL` (mặc định cùng origin với trang web)
+- **WebSocket**: `VITE_WS_BASE_URL` (mặc định cùng host, đổi `https` thành `wss` khi chạy HTTPS)
+- Trong dev, Vite proxy các đường dẫn API và WebSocket về FastAPI tại `127.0.0.1:8000`.
+- Không đưa URL `localhost` vào bản build công khai: `localhost` của khách truy cập là thiết bị của chính họ. Client tự bỏ URL loopback nếu trang được mở từ host công khai.
+- Nếu frontend và backend chạy trên hai host khác nhau, cấu hình hai biến trên thành public HTTPS/WSS origin của backend và cho phép origin frontend trong `CORS_ORIGINS`.
 
 ## 2. Xác thực (Authentication)
 - `POST /auth/register`: Đăng ký tài khoản

@@ -34,7 +34,7 @@ def _raise_http(exc: AppException) -> None:
     status_code=status.HTTP_201_CREATED,
     summary="Upload OCR image/PDF or Excel/CSV file to create a staging import session",
 )
-async def create_import_session(
+def create_import_session(
     member_id: int,
     file: UploadFile = File(...),
     source_type: str | None = Form(default=None),
@@ -46,7 +46,7 @@ async def create_import_session(
 ) -> ImportSessionResponse:
     file_ext = (file.filename or "").rsplit(".", 1)[-1].lower()
     max_bytes = 20 * 1024 * 1024 if file_ext == "pdf" else 10 * 1024 * 1024
-    file_bytes = await file.read(max_bytes + 1)
+    file_bytes = file.file.read(max_bytes + 1)
     if len(file_bytes) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,

@@ -1,14 +1,19 @@
 import json
-import re
-from datetime import date
 from typing import Any
 
 from backend.app.modules.imports.adapters.base import BaseImportAdapter
 from backend.app.modules.imports.exceptions import ImportUnsupportedFileError
+from backend.app.modules.imports.ocr_engine import LocalTesseractOCREngine
+from backend.app.modules.imports.parsers.ocr_prescription_parser import (
+    parse_ocr_prescription,
+)
 
 
 class OCRImportAdapter(BaseImportAdapter):
-    parser_version = "ocr-v1.0.0"
+    parser_version = "ocr-v2.0.0"
+
+    def __init__(self, engine: LocalTesseractOCREngine | None = None) -> None:
+        self.engine = engine or LocalTesseractOCREngine()
 
     def extract(
         self,
@@ -25,6 +30,22 @@ class OCRImportAdapter(BaseImportAdapter):
         if json_payload is not None:
             return self._normalize_ocr_json(json_payload, default_member_name=default_member_name)
 
+        is_binary_document = (
+            file_bytes.startswith((b"\x89PNG", b"\xff\xd8\xff", b"GIF8", b"II*\x00", b"MM\x00*", b"%PDF"))
+            or filename.casefold().endswith(".pdf")
+        )
+        if is_binary_document:
+            result = self.engine.extract(file_bytes, filename)
+            parsed = self._parse_free_text_prescription(
+                result.text,
+                filename=filename,
+                default_member_name=default_member_name,
+                confidence=result.confidence,
+            )
+            parsed["ocr_engine"] = result.engine
+            parsed["page_confidences"] = result.page_confidences
+            return parsed
+
         # 2. If readable Vietnamese/English prescription text is found in the file
         if text_content and any(
             kw in text_content.lower()
@@ -36,11 +57,8 @@ class OCRImportAdapter(BaseImportAdapter):
                 default_member_name=default_member_name,
             )
 
-        # Never invent medication data when binary scan text cannot be read.
-        # A real image/PDF OCR engine must be configured before accepting scans.
         raise ImportUnsupportedFileError(
-            "Không đọc được nội dung đơn thuốc. OCR cho ảnh/PDF chưa được cấu hình; "
-            "hệ thống không tạo dữ liệu thuốc mẫu. Hãy dùng tệp có văn bản đọc được "
+            "Không nhận diện được nội dung đơn thuốc trong tệp. Hãy dùng ảnh/PDF rõ nét "
             "hoặc nhập bằng Excel/CSV."
         )
 
@@ -101,105 +119,19 @@ class OCRImportAdapter(BaseImportAdapter):
         *,
         filename: str,
         default_member_name: str | None = None,
+        confidence: float | None = None,
     ) -> dict[str, Any]:
-        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-        member_name = default_member_name
-        doctor_name = None
-        facility_name = None
-        issued_at = date.today().isoformat()
-        diagnosis_notes = None
-        allergy_notes = None
-        adverse_reaction_notes = None
-        title = "Đơn thuốc OCR"
-
-        medications: list[dict[str, Any]] = []
         is_low = "blur" in filename.lower() or "low" in filename.lower()
-        default_conf = 0.65 if is_low else 0.91
-
-        for line in lines:
-            low = line.lower()
-            if low.startswith(("họ tên", "ho ten", "bệnh nhân", "benh nhan", "người bệnh", "patient")):
-                parts = line.split(":", 1)
-                if len(parts) == 2 and parts[1].strip():
-                    member_name = parts[1].strip()
-            elif low.startswith(("bác sĩ", "bac si", "doctor")):
-                parts = line.split(":", 1)
-                if len(parts) == 2:
-                    doctor_name = parts[1].strip()
-            elif low.startswith(("bệnh viện", "benh vien", "phòng khám", "phong kham", "cơ sở", "facility")):
-                parts = line.split(":", 1)
-                facility_name = parts[1].strip() if len(parts) == 2 else line
-            elif low.startswith(("chẩn đoán", "chan doan", "diagnosis")):
-                parts = line.split(":", 1)
-                if len(parts) == 2:
-                    diagnosis_notes = parts[1].strip()
-                    title = f"Đơn thuốc - {diagnosis_notes}"
-            elif low.startswith(("dị ứng", "di ung", "allergy")):
-                parts = line.split(":", 1)
-                if len(parts) == 2:
-                    allergy_notes = parts[1].strip()
-            elif low.startswith(("phản ứng", "phan ung", "adverse")):
-                parts = line.split(":", 1)
-                if len(parts) == 2:
-                    adverse_reaction_notes = parts[1].strip()
-            elif re.match(r"^\d+[\.\)]\s+", line):
-                med_line = re.sub(r"^\d+[\.\)]\s+", "", line)
-                seg = [s.strip() for s in med_line.split("-") if s.strip()]
-                med_name = seg[0] if seg else med_line
-                freq_text = seg[-1] if len(seg) > 1 else "2 lần/ngày"
-                medications.append(
-                    {
-                        "medication_name": med_name,
-                        "dose_amount": 1.0,
-                        "dose_unit": "tablet",
-                        "frequency_per_day": 2.0 if "2" in freq_text else 1.0,
-                        "frequency_text": freq_text,
-                        "route": "ORAL",
-                        "instructions": med_line,
-                        "quantity": 10.0,
-                        "unit": "tablet",
-                        "confidence": default_conf,
-                        "field_confidences": {
-                            "medication_name": default_conf,
-                            "dose_amount": default_conf,
-                        },
-                    }
-                )
-
-        if not medications:
-            medications.append(
-                {
-                    "medication_name": "Paracetamol 500mg",
-                    "strength": "500mg",
-                    "dose_amount": 1.0,
-                    "dose_unit": "tablet",
-                    "frequency_per_day": 2.0,
-                    "frequency_text": "2 lần/ngày",
-                    "route": "ORAL",
-                    "quantity": 10.0,
-                    "unit": "tablet",
-                    "confidence": default_conf,
-                }
-            )
-
+        default_conf = confidence if confidence is not None else (0.65 if is_low else 0.91)
+        parsed = parse_ocr_prescription(
+            text,
+            default_member_name=default_member_name,
+            confidence=default_conf,
+        )
         return {
             "raw_text": text,
             "overall_confidence": default_conf,
-            "prescription_meta": {
-                "member_name": member_name,
-                "prescription_title": title,
-                "doctor_name": doctor_name,
-                "facility_name": facility_name,
-                "issued_at": issued_at,
-                "start_date": issued_at,
-                "diagnosis_notes": diagnosis_notes,
-                "allergy_notes": allergy_notes,
-                "adverse_reaction_notes": adverse_reaction_notes,
-                "field_confidences": {
-                    "member_name": default_conf,
-                    "doctor_name": default_conf,
-                },
-            },
-            "medications": medications,
+            "prescription_meta": parsed.prescription_meta,
+            "medications": parsed.medications,
         }
 

@@ -18,7 +18,10 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
-    widget.api.restoreSession().catchError((_) async {
+    widget.api
+        .initialize()
+        .then((_) => widget.api.restoreSession())
+        .catchError((_) async {
       await widget.api.logout();
     }).then((_) {
       if (mounted) setState(() => _loading = false);

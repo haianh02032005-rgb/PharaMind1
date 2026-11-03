@@ -255,6 +255,7 @@ export interface CommitRequest {
   confirm_import_mode: ImportMode;
   confirm_schedule_creation: boolean;
   confirm_health_updates: boolean;
+  confirm_ocr_review: boolean;
 }
 
 export type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;

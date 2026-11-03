@@ -11,6 +11,7 @@ interface ImportWizardState {
   error: string | null;
   confirmSchedules: boolean;
   confirmHealth: boolean;
+  confirmOcrReview: boolean;
   setStep: (step: WizardStep) => void;
   setMemberId: (id: number | null) => void;
   setImportMode: (mode: ImportMode) => void;
@@ -20,6 +21,7 @@ interface ImportWizardState {
   setError: (e: string | null) => void;
   setConfirmSchedules: (v: boolean) => void;
   setConfirmHealth: (v: boolean) => void;
+  setConfirmOcrReview: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -33,6 +35,7 @@ const initial = {
   error: null,
   confirmSchedules: true,
   confirmHealth: false,
+  confirmOcrReview: false,
 };
 
 export const useImportWizardStore = create<ImportWizardState>((set) => ({
@@ -46,6 +49,7 @@ export const useImportWizardStore = create<ImportWizardState>((set) => ({
   setError: (error) => set({ error }),
   setConfirmSchedules: (confirmSchedules) => set({ confirmSchedules }),
   setConfirmHealth: (confirmHealth) => set({ confirmHealth }),
+  setConfirmOcrReview: (confirmOcrReview) => set({ confirmOcrReview }),
   reset: () => set({ ...initial }),
 }));
 

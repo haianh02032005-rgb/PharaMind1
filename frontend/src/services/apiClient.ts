@@ -1,14 +1,40 @@
-export const API_BASE_URL =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as unknown as { env?: Record<string, string> }).env
-      ?.VITE_API_BASE_URL) ||
-  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
+const configuredEnvironment =
+  typeof import.meta !== "undefined"
+    ? (import.meta as unknown as { env?: Record<string, string> }).env
+    : undefined;
 
-export const WS_BASE_URL =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as unknown as { env?: Record<string, string> }).env
-      ?.VITE_WS_BASE_URL) ||
-  API_BASE_URL.replace(/^http/, "ws");
+const pageOrigin =
+  typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
+
+function isLoopbackUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value, pageOrigin).hostname.toLowerCase();
+    return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
+function resolveServiceBase(configured: string | undefined, fallback: string): string {
+  // A localhost URL baked into a Vite build points to each visitor's own device.
+  // When the app is opened through a public tunnel/domain, use the public origin
+  // so a same-origin tunnel/proxy can forward API and WebSocket traffic.
+  const isPublicPage = typeof window !== "undefined" && !isLoopbackUrl(pageOrigin);
+  const selected = configured && !(isPublicPage && isLoopbackUrl(configured))
+    ? configured
+    : fallback;
+  return selected.replace(/\/+$/, "");
+}
+
+export const API_BASE_URL = resolveServiceBase(
+  configuredEnvironment?.VITE_API_BASE_URL,
+  pageOrigin,
+);
+
+export const WS_BASE_URL = resolveServiceBase(
+  configuredEnvironment?.VITE_WS_BASE_URL,
+  API_BASE_URL.replace(/^http/, "ws"),
+);
 
 const ACCESS_TOKEN_KEY = "pm_access_token";
 const REFRESH_TOKEN_KEY = "pm_refresh_token";

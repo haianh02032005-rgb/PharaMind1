@@ -13,9 +13,10 @@ Run standalone:
     python -m backend.app.db.seed_demo
 """
 
+import logging
 import sys
 from datetime import date, datetime, time, timezone
-from sqlalchemy import select
+from sqlalchemy import delete, exists, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.security import hash_password, normalize_email
@@ -28,6 +29,7 @@ from backend.app.models.family_medication import FamilyMedication
 from backend.app.models.family_member import FamilyMember
 from backend.app.models.family_membership import FamilyMembership
 from backend.app.models.health_profile import HealthProfile
+from backend.app.models.import_session import ImportSession
 from backend.app.models.medical_condition import MedicalCondition
 from backend.app.models.medication_catalog import MedicationCatalog
 from backend.app.models.medication_schedule import MedicationSchedule
@@ -37,38 +39,153 @@ from backend.app.models.prescription_item import PrescriptionItem
 from backend.app.models.schedule_time import ScheduleTime
 from backend.app.models.user import User, UserStatus
 from backend.app.modules.medications.enums import MedicationSource, MedicationStatus
+from backend.app.modules.imports.file_storage import PrescriptionFileStorage
 from backend.app.modules.prescriptions.enums import PrescriptionStatus
 from backend.app.shared.enums import AllergyType, ConditionStatus, FamilyRole, FamilyStatus, MemberStatus, Severity
 
 DEMO_EMAIL = "demo@pharmamind.vn"
 DEMO_PASSWORD = "DemoPass123!"
 DEMO_NAME = "Nguyễn Minh An (Demo)"
+logger = logging.getLogger(__name__)
 
 
-def seed_demo_data(db: Session, force_reset: bool = False) -> None:
+def _clear_demo_ecosystem(db: Session, user: User) -> list[str]:
+    """Remove demo-owned data while preserving the login identity and other users' data."""
+    owned_family_ids = list(
+        db.scalars(
+            select(FamilyMembership.family_id).where(
+                FamilyMembership.user_id == user.id,
+                FamilyMembership.role == FamilyRole.OWNER.value,
+            )
+        ).all()
+    )
+
+    # A family is safe to delete only while the demo account is its sole owner.
+    # If ownership was shared with a registered user, only detach the demo account.
+    deletable_family_ids: list[int] = []
+    for family_id in owned_family_ids:
+        other_owner = db.scalars(
+            select(FamilyMembership.id)
+            .where(
+                FamilyMembership.family_id == family_id,
+                FamilyMembership.user_id != user.id,
+                FamilyMembership.role == FamilyRole.OWNER.value,
+            )
+            .limit(1)
+        ).first()
+        if other_owner is None:
+            deletable_family_ids.append(family_id)
+
+    storage_paths: list[str] = []
+    catalog_ids: list[int] = []
+    if deletable_family_ids:
+        storage_paths = [
+            path
+            for path in db.scalars(
+                select(ImportSession.storage_path).where(
+                    ImportSession.family_id.in_(deletable_family_ids),
+                    ImportSession.storage_path.is_not(None),
+                )
+            ).all()
+            if path
+        ]
+        catalog_ids = list(
+            db.scalars(
+                select(FamilyMedication.catalog_id).where(
+                    FamilyMedication.family_id.in_(deletable_family_ids),
+                    FamilyMedication.catalog_id.is_not(None),
+                )
+            ).all()
+        )
+        # These two tables also point at family_medications with RESTRICT.
+        # Delete them first so PostgreSQL does not depend on cascade order.
+        db.execute(
+            delete(MedicationSchedule).where(
+                MedicationSchedule.family_id.in_(deletable_family_ids)
+            )
+        )
+        db.execute(
+            delete(Prescription).where(Prescription.family_id.in_(deletable_family_ids))
+        )
+        db.execute(delete(Family).where(Family.id.in_(deletable_family_ids)))
+        if catalog_ids:
+            db.execute(
+                delete(MedicationCatalog).where(
+                    MedicationCatalog.id.in_(catalog_ids),
+                    ~exists(
+                        select(FamilyMedication.id).where(
+                            FamilyMedication.catalog_id == MedicationCatalog.id
+                        )
+                    ),
+                )
+            )
+
+    # Remove memberships from families that are retained because another owner
+    # exists, plus any non-owner memberships the shared demo account acquired.
+    db.execute(delete(FamilyMembership).where(FamilyMembership.user_id == user.id))
+    db.flush()
+    return storage_paths
+
+
+def _delete_demo_uploads(storage_paths: list[str]) -> None:
+    storage = PrescriptionFileStorage()
+    for path in storage_paths:
+        try:
+            storage.delete(path)
+        except Exception:
+            # The database reset is already committed. A missing/unavailable
+            # object must not prevent visitors from using the demo account.
+            logger.exception("Could not remove demo upload %s", path)
+
+
+def reset_demo_account(db: Session, user: User) -> None:
+    """Return the shared demo login to a brand-new, completely empty account."""
+    storage_paths = _clear_demo_ecosystem(db, user)
+    user.password_hash = hash_password(DEMO_PASSWORD)
+    user.full_name = DEMO_NAME
+    user.status = UserStatus.ACTIVE.value
+    user.is_email_verified = False
+    db.commit()
+    _delete_demo_uploads(storage_paths)
+
+
+def seed_demo_data(
+    db: Session,
+    force_reset: bool = False,
+    *,
+    quiet: bool = False,
+) -> None:
     norm_email = normalize_email(DEMO_EMAIL)
     existing_user = db.scalars(select(User).where(User.email == norm_email)).first()
 
     if existing_user is not None and not force_reset:
-        print(f"[Seed] Demo user '{norm_email}' already exists. Skipping seed.")
+        if not quiet:
+            print(f"[Seed] Demo user '{norm_email}' already exists. Skipping seed.")
         return
 
+    storage_paths: list[str] = []
     if existing_user is not None and force_reset:
-        print(f"[Seed] Force reset: removing existing demo user '{norm_email}'...")
-        db.delete(existing_user)
-        db.commit()
+        if not quiet:
+            print(f"[Seed] Force reset: clearing demo data for '{norm_email}'...")
+        storage_paths = _clear_demo_ecosystem(db, existing_user)
+        user = existing_user
+        user.password_hash = hash_password(DEMO_PASSWORD)
+        user.full_name = DEMO_NAME
+        user.status = UserStatus.ACTIVE.value
+        user.is_email_verified = False
+    else:
+        # 1. User
+        user = User(
+            email=norm_email,
+            password_hash=hash_password(DEMO_PASSWORD),
+            full_name=DEMO_NAME,
+            status=UserStatus.ACTIVE.value,
+        )
+        db.add(user)
+        db.flush()
 
-    print("[Seed] Creating demo account & sample health ecosystem...")
-
-    # 1. User
-    user = User(
-        email=norm_email,
-        password_hash=hash_password(DEMO_PASSWORD),
-        full_name=DEMO_NAME,
-        status=UserStatus.ACTIVE.value,
-    )
-    db.add(user)
-    db.flush()
+    if not quiet:
+        print("[Seed] Creating demo account & sample health ecosystem...")
 
     # 2. Family
     family = Family(
@@ -347,15 +464,17 @@ def seed_demo_data(db: Session, force_reset: bool = False) -> None:
     db.add(ScheduleTime(schedule_id=sched_2.id, time_of_day=time(8, 0)))
 
     db.commit()
-    print("[Seed] Successfully seeded demo ecosystem for PharmaMind AI!")
-    print(f"       Account : {DEMO_EMAIL}")
-    print(f"       Password: {DEMO_PASSWORD}")
-    try:
-        print(f"       Family  : {family.name}")
-        print(f"       Cabinet : {cabinet.name} (9/9 compartments mapped)")
-    except UnicodeEncodeError:
-        print(f"       Family ID : {family.id}")
-        print(f"       Cabinet ID: {cabinet.id}")
+    _delete_demo_uploads(storage_paths)
+    if not quiet:
+        print("[Seed] Successfully seeded demo ecosystem for PharmaMind AI!")
+        print(f"       Account : {DEMO_EMAIL}")
+        print(f"       Password: {DEMO_PASSWORD}")
+        try:
+            print(f"       Family  : {family.name}")
+            print(f"       Cabinet : {cabinet.name} (9/9 compartments mapped)")
+        except UnicodeEncodeError:
+            print(f"       Family ID : {family.id}")
+            print(f"       Cabinet ID: {cabinet.id}")
 
 
 if __name__ == "__main__":

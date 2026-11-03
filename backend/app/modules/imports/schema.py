@@ -274,6 +274,7 @@ class ImportCommitRequest(BaseModel):
     confirm_import_mode: ImportMode = ImportMode.CREATE_NEW_PRESCRIPTION
     confirm_schedule_creation: bool = True
     confirm_health_updates: bool = False
+    confirm_ocr_review: bool = False
     simulate_failure: bool = False  # For testing transaction rollback (§32.9)
 
 

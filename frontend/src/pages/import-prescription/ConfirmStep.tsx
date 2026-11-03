@@ -36,7 +36,8 @@ export const ConfirmStep: React.FC = () => {
   const items = (review.items || []).filter((i) => i.action !== "SKIP");
   const memberName = members.find((m) => m.id === session.member_id)?.full_name || `#${session.member_id}`;
   const blocking = getBlockingIssues(session.validation_issues);
-  const ok = canCommit(session);
+  const isOcr = session.source_type === "OCR_IMAGE" || session.source_type === "OCR_PDF";
+  const ok = canCommit(session) && (!isOcr || w.confirmOcrReview);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -73,6 +74,17 @@ export const ConfirmStep: React.FC = () => {
           <input type="checkbox" checked={w.confirmHealth} onChange={(e) => w.setConfirmHealth(e.target.checked)} />
           Lưu các cập nhật Hồ sơ sức khỏe đã chọn
         </label>
+        {isOcr && (
+          <label style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <input
+              type="checkbox"
+              checked={w.confirmOcrReview}
+              onChange={(e) => w.setConfirmOcrReview(e.target.checked)}
+              style={{ marginTop: 3 }}
+            />
+            Tôi đã đối chiếu tên thuốc, hàm lượng, liều mỗi lần, đường dùng và tần suất với đơn thuốc gốc.
+          </label>
+        )}
       </div>
 
       {blocking.length > 0 && <ConflictAlert issues={blocking} />}

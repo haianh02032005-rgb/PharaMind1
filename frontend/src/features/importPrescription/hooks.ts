@@ -44,6 +44,7 @@ export function useImportWizard() {
   const upload = useCallback(
     (file: File) => {
       if (!familyId || !store.memberId) return Promise.resolve(null);
+      store.setConfirmOcrReview(false);
       return run(() =>
         uploadImportFile({
           familyId,
@@ -82,9 +83,10 @@ export function useImportWizard() {
         confirm_import_mode: s.import_mode,
         confirm_schedule_creation: store.confirmSchedules,
         confirm_health_updates: store.confirmHealth,
+        confirm_ocr_review: store.confirmOcrReview,
       })
     );
-  }, [familyId, store.session, store.confirmSchedules, store.confirmHealth, run]);
+  }, [familyId, store.session, store.confirmSchedules, store.confirmHealth, store.confirmOcrReview, run]);
 
   const reject = useCallback(
     (reason?: string) => {

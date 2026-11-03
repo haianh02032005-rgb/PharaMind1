@@ -1,5 +1,7 @@
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.app.core.config import settings
 from backend.app.core.exceptions import (
     AuthenticationError,
     InvalidTokenError,
@@ -12,6 +14,7 @@ from backend.app.core.security import (
     normalize_email,
     verify_password,
 )
+from backend.app.db.seed_demo import DEMO_EMAIL, reset_demo_account
 from backend.app.models.user import User, UserStatus
 from backend.app.modules.auth.schema import (
     AccessTokenResponse,
@@ -52,6 +55,13 @@ class AuthService:
             raise AuthenticationError("Invalid email or password")
 
         self._ensure_user_active(user)
+
+        if settings.demo_reset_on_login and email == normalize_email(DEMO_EMAIL):
+            # Serialize simultaneous demo logins. PostgreSQL advisory locks are
+            # transaction-scoped and released automatically after the seed commit.
+            if db.get_bind().dialect.name == "postgresql":
+                db.execute(text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": 73466201})
+            reset_demo_account(db, user)
 
         access_token = create_access_token(user.id)
         refresh_token = create_refresh_token(user.id)

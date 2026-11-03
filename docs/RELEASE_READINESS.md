@@ -7,7 +7,7 @@
 - Upload đơn thuốc được giới hạn kích thước khi đọc request, tránh nạp file không giới hạn vào RAM.
 - Frontend tải màn hình theo route để trì hoãn phần Digital Twin nặng.
 - Trang AI không còn sinh câu trả lời dược lý hard-code. Trang nêu rõ dịch vụ AI chưa sẵn sàng.
-- Bộ phân tích OCR không còn biến ảnh/PDF không đọc được thành đơn thuốc Paracetamol/Vitamin C bịa; trường hợp này báo rõ OCR ảnh/PDF chưa kết nối.
+- OCR ảnh/PDF đã dùng Tesseract 5 với tiếng Việt và tiếng Anh, hỗ trợ PDF có lớp chữ lẫn PDF quét. Pipeline không tự sinh thuốc khi không đọc được nội dung và bắt buộc người dùng xác nhận đã đối chiếu đơn gốc trước khi lưu.
 - `storage/imports/` chứa tài liệu đơn thuốc đã tải lên, vì vậy được loại khỏi Git. Không xóa dữ liệu hiện có.
 - Flutter MVP source nằm trong `mobile/`; chưa có thư mục native Android/iOS do môi trường phát triển chưa cài Flutter SDK.
 
@@ -24,7 +24,7 @@ Frontend build hiện có entry chính khoảng 188 KB minified; Digital Twin 3D
 
 1. Cài Flutter SDK và tạo Android/iOS project; build trên Android. iOS build/signing cần macOS + Xcode.
 2. Chọn API domain staging/production, HTTPS, `API_BASE_URL` cho app và origins chính xác cho web. Không đưa JWT secret hoặc API keys vào mobile binary.
-3. OCR ảnh/PDF thực chưa được kết nối; hiện chỉ xử lý văn bản đọc được/fixture. Cần tích hợp OCR provider và đánh giá chất lượng tiếng Việt.
+3. OCR đã hoạt động với đơn in rõ nét; trước pilot cần benchmark thêm trên một tập ảnh/PDF thực tế đã khử định danh, gồm ảnh nghiêng, lóa, mờ và nhiều mẫu bệnh viện. Chữ viết tay chưa được bảo đảm.
 4. Dịch vụ AI và notification routers còn placeholder. Chỉ bật các tính năng đó sau khi có backend, kiểm tra an toàn và cấu hình nhà cung cấp.
 5. Cấu hình lưu file upload bền vững, riêng tư và có backup; thư mục `storage/imports/` hiện là lưu cục bộ.
 6. Chốt chính sách phát hành: package/bundle ID, app signing, privacy policy và nội dung xin quyền thiết bị.

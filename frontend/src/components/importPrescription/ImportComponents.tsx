@@ -246,13 +246,29 @@ export const MedicationMatchCard: React.FC<{
           </div>
           <div className="grid-2">
             <FieldReviewRow label="Hướng dẫn dùng" value={item.instructions || ""} disabled={disabled} onChange={(v) => set("instructions", v)} />
-            <FieldReviewRow
-              label="Số lượng nhập tủ"
-              type="number"
-              value={item.quantity?.toString() ?? ""}
-              disabled={disabled || item.action === "LINK_EXISTING"}
-              onChange={(v) => set("quantity", v === "" ? null : Number(v))}
-            />
+            <div className="grid-2">
+              <div className="form-group">
+                <label className="form-label">Đường dùng</label>
+                <select className="select" value={item.route || ""} disabled={disabled} onChange={(e) => set("route", e.target.value)}>
+                  <option value="">Chọn đường dùng</option>
+                  <option value="ORAL">Uống</option>
+                  <option value="TOPICAL">Bôi ngoài da</option>
+                  <option value="INHALATION">Hít / xịt</option>
+                  <option value="INJECTION">Tiêm</option>
+                  <option value="EYE">Mắt</option>
+                  <option value="EAR">Tai</option>
+                  <option value="NASAL">Mũi</option>
+                  <option value="OTHER">Khác</option>
+                </select>
+              </div>
+              <FieldReviewRow
+                label="Số lượng nhập tủ"
+                type="number"
+                value={item.quantity?.toString() ?? ""}
+                disabled={disabled || item.action === "LINK_EXISTING"}
+                onChange={(v) => set("quantity", v === "" ? null : Number(v))}
+              />
+            </div>
           </div>
           <div style={{ fontSize: "0.85rem", color: "var(--pm-text-secondary)", marginBottom: 8 }}>
             Tóm tắt liều: <strong>{formatDoseVi(item)}</strong>

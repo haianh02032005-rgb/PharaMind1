@@ -1,7 +1,5 @@
 import hashlib
-import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
@@ -40,6 +38,7 @@ from backend.app.modules.imports.exceptions import (
     ImportUnsupportedFileError,
     ImportValidationBlockedError,
 )
+from backend.app.modules.imports.file_storage import PrescriptionFileStorage
 from backend.app.modules.imports.normalizers.date_normalizer import (
     normalize_date,
     normalize_time_string,
@@ -112,9 +111,6 @@ ALLOWED_EXTENSIONS: dict[str, ImportSourceType] = {
 MAX_PDF_BYTES = 20 * 1024 * 1024
 MAX_OTHER_BYTES = 10 * 1024 * 1024
 
-STORAGE_ROOT = Path("storage/imports")
-
-
 class ImportService:
     def __init__(
         self,
@@ -123,12 +119,14 @@ class ImportService:
         ocr_adapter: OCRImportAdapter | None = None,
         excel_adapter: ExcelImportAdapter | None = None,
         commit_service: ImportCommitService | None = None,
+        file_storage: PrescriptionFileStorage | None = None,
     ) -> None:
         self.repository = repository or ImportRepository()
         self.member_repository = member_repository or MemberRepository()
         self.ocr_adapter = ocr_adapter or OCRImportAdapter()
         self.excel_adapter = excel_adapter or ExcelImportAdapter()
         self.commit_service = commit_service or ImportCommitService()
+        self.file_storage = file_storage or PrescriptionFileStorage()
 
     # ------------------------------------------------------------------
     # 1. Upload & Create Staging Session
@@ -174,14 +172,6 @@ class ImportService:
         is_duplicate = existing_dup is not None
         duplicate_of_id = existing_dup.id if existing_dup else None
 
-        # Store private file (§25)
-        storage_path = self._save_private_file(
-            family_id=membership.family_id,
-            member_id=member.id,
-            ext=ext,
-            file_bytes=file_bytes,
-        )
-
         # Extract raw data via OCR or Excel adapter
         adapter = (
             self.excel_adapter
@@ -193,6 +183,17 @@ class ImportService:
             file_bytes,
             filename,
             default_member_name=member.full_name,
+        )
+
+        # Persist the private source only after parsing succeeds. Invalid or
+        # unreadable files therefore do not leave orphaned local/S3 objects.
+        storage_path = self._save_private_file(
+            family_id=membership.family_id,
+            member_id=member.id,
+            ext=ext,
+            file_bytes=file_bytes,
+            content_type=content_type,
+            source_hash=source_hash,
         )
 
         # Normalize & build staging payload
@@ -596,6 +597,15 @@ class ImportService:
         )
         self._ensure_session_editable(session_obj)
 
+        if (
+            session_obj.source_type
+            in {ImportSourceType.OCR_IMAGE.value, ImportSourceType.OCR_PDF.value}
+            and not payload.confirm_ocr_review
+        ):
+            raise ImportValidationBlockedError(
+                "Bạn phải xác nhận đã đối chiếu tên thuốc, hàm lượng, liều, đường dùng và tần suất với đơn gốc trước khi lưu."
+            )
+
         # If user chose not to create schedules on commit, disable schedule validation errors first
         if not payload.confirm_schedule_creation:
             review = dict(session_obj.review_payload or {})
@@ -722,7 +732,13 @@ class ImportService:
                 duplicate_acknowledged=bool(review.get("duplicate_acknowledged", False)),
             )
         )
-        all_issue_specs.extend(validate_medication_items(med_items))
+        all_issue_specs.extend(
+            validate_medication_items(
+                med_items,
+                require_route=session_obj.source_type
+                in {ImportSourceType.OCR_IMAGE.value, ImportSourceType.OCR_PDF.value},
+            )
+        )
         all_issue_specs.extend(validate_schedule_candidates(med_items))
         all_issue_specs.extend(
             validate_health_candidates(
@@ -791,20 +807,24 @@ class ImportService:
             return explicit_source_type, ext
         return inferred_type, ext
 
-    @staticmethod
     def _save_private_file(
+        self,
         *,
         family_id: int,
         member_id: int,
         ext: str,
         file_bytes: bytes,
+        content_type: str | None = None,
+        source_hash: str | None = None,
     ) -> str:
-        target_dir = STORAGE_ROOT / f"family_{family_id}" / f"member_{member_id}"
-        target_dir.mkdir(parents=True, exist_ok=True)
-        unique_name = f"{uuid.uuid4().hex}.{ext}"
-        full_path = target_dir / unique_name
-        full_path.write_bytes(file_bytes)
-        return str(full_path).replace("\\", "/")
+        return self.file_storage.save(
+            family_id=family_id,
+            member_id=member_id,
+            extension=ext,
+            content=file_bytes,
+            content_type=content_type,
+            sha256=source_hash,
+        )
 
     def _get_scoped_member(
         self,

@@ -23,10 +23,15 @@ def parse_medication_item(raw_item: dict[str, Any], row_index: int) -> dict[str,
     )
 
     dose_unit_raw = raw_item.get("dose_unit") or raw_item.get("unit")
-    dose_unit = normalize_unit(dose_unit_raw)
-    unit = normalize_unit(raw_item.get("unit") or dose_unit_raw)
-    dosage_form = normalize_dosage_form(raw_item.get("dosage_form"), unit)
-    route = normalize_route(raw_item.get("route"))
+    dose_unit = normalize_unit(dose_unit_raw) if dose_unit_raw else None
+    unit_raw = raw_item.get("unit") or dose_unit_raw
+    unit = normalize_unit(unit_raw) if unit_raw else None
+    dosage_form = (
+        normalize_dosage_form(raw_item.get("dosage_form"), unit)
+        if raw_item.get("dosage_form") or unit
+        else None
+    )
+    route = normalize_route(raw_item.get("route")) if raw_item.get("route") else None
 
     dose_amount: float | None = None
     if raw_item.get("dose_amount") is not None and str(raw_item.get("dose_amount")).strip() != "":

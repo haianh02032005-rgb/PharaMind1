@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, LogIn, ShieldCheck } from "lucide-react";
+import { PwaInstallButton } from "../../components/pwa/PwaInstallButton";
 import { authService } from "../../services/authService";
 import { apiRequest } from "../../services/apiClient";
 import { useAuthStore } from "../../store/authStore";
@@ -212,6 +213,15 @@ export const LoginPage: React.FC = () => {
             PharmaMind AI hỗ trợ theo dõi lịch dùng thuốc và cảnh báo an toàn hộ gia
             đình; không thay thế chẩn đoán hoặc chỉ định của bác sĩ.
           </span>
+        </div>
+        <div
+          style={{
+            marginTop: 14,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <PwaInstallButton />
         </div>
       </div>
     </div>

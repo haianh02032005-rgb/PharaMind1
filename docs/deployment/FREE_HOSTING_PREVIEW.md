@@ -19,7 +19,7 @@ At Koyeb's deploy screen, select the Free instance in Frankfurt or Washington, e
 
 Create the Neon database first so the `DATABASE_URL` secret is ready before the first deploy. On success, Koyeb shows a public HTTPS URL ending in `.koyeb.app`. Detailed steps and current free-tier limits are in [deploy/koyeb/README.md](../../deploy/koyeb/README.md).
 
-Koyeb's free instance has 512 MB RAM and 0.1 vCPU, and scales to zero after one hour without traffic. Neon Free includes 1 GB of PostgreSQL storage and 100 compute-hours per month, and suspends compute after five minutes of inactivity. These tiers are for a low-traffic demo, not a production availability guarantee. Prescription uploads currently use the container filesystem and can disappear after a restart. Do not enter real family health data, prescriptions, or credentials into this preview.
+Koyeb's free instance has 512 MB RAM and 0.1 vCPU, and scales to zero after one hour without traffic. Neon Free includes 1 GB of PostgreSQL storage and 100 compute-hours per month, and suspends compute after five minutes of inactivity. These tiers are for a low-traffic demo, not a production availability guarantee. Uploads use local storage unless S3-compatible storage is configured; the container filesystem is ephemeral. Do not enter real family health data, prescriptions, or credentials into this preview. See [persistent upload storage and backups](UPLOAD_STORAGE_AND_BACKUPS.md) before configuring an object bucket.
 
 Official limits: [Koyeb Free instance](https://www.koyeb.com/docs/reference/instances), [Neon Free plan](https://github.com/neondatabase/website/blob/main/content/faqs/free-plan-limits-and-quotas.md).
 
@@ -47,8 +47,8 @@ If the Blueprint was already created from the previous version that expected a m
 
 ### Free tier limits
 
-The Render Free web service sleeps after 15 minutes without inbound traffic and takes about a minute to wake. Its filesystem is ephemeral. A Render Free Postgres database expires after 30 days, has no backups, and is limited to 1 GB. Prescription uploads currently use local filesystem storage, so uploaded source files can disappear after a restart/redeploy. Do not enter real family health data, prescriptions, or credentials into this preview.
+The Render Free web service sleeps after 15 minutes without inbound traffic and takes about a minute to wake. Its filesystem is ephemeral. A Render Free Postgres database expires after 30 days, has no backups, and is limited to 1 GB. Uploads use local storage unless S3-compatible storage is configured; the container filesystem is ephemeral. Do not enter real family health data, prescriptions, or credentials into this preview.
 
-Before a real pilot, move to persistent storage with backups, use a paid/managed database and hosting plan, add a private object store for uploads, configure monitoring and restore tests, and finish the missing OCR/AI/notification services. See the [full deployment plan](../../task/PRODUCTION_SERVER_DEPLOYMENT_PLAN.md).
+Before a real pilot, use a paid/managed database and hosting plan, configure a private object store and separate backups for uploads, configure monitoring and restore tests, benchmark OCR on de-identified real prescriptions, and finish the missing AI/notification services. See the [OCR deployment guide](OCR_PRODUCTION.md), [upload storage guide](UPLOAD_STORAGE_AND_BACKUPS.md), and [full deployment plan](../../task/PRODUCTION_SERVER_DEPLOYMENT_PLAN.md).
 
 Official limits: [Render Free services and Postgres](https://render.com/docs/free).
