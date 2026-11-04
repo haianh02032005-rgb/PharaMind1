@@ -48,6 +48,8 @@ build/
 /*.apk
 /frontend/node_modules/
 /frontend/dist/
+/desktop/node_modules/
+/desktop/dist/
 /deploy/*/node_modules/
 /deploy/*/.wrangler/
 /deploy/*/worker-configuration.d.ts

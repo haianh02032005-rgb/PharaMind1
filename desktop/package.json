@@ -1,0 +1,57 @@
+{
+  "name": "pharmamind-ai-desktop",
+  "version": "1.0.0",
+  "description": "PharmaMind AI desktop application for Windows",
+  "main": "main.cjs",
+  "private": true,
+  "author": "PharmaMind AI",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "45.2.2",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "ai.pharmamind.desktop",
+    "productName": "PharmaMind AI",
+    "copyright": "Copyright © 2026 PharmaMind AI",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "artifactName": "PharmaMind-AI-Desktop-Setup-${version}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PharmaMind AI",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
