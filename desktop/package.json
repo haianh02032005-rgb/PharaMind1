@@ -1,11 +1,14 @@
 {
   "name": "pharmamind-ai-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PharmaMind AI desktop application for Windows and Linux",
   "desktopName": "pharmamind-ai.desktop",
   "main": "main.cjs",
   "private": true,
-  "author": "PharmaMind AI",
+  "author": {
+    "name": "PharmaMind AI",
+    "email": "haianh02032005-rgb@users.noreply.github.com"
+  },
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
@@ -64,7 +67,7 @@
       "executableName": "pharmamind-ai",
       "syncDesktopName": true,
       "artifactName": "PharmaMind-AI-Desktop-${version}-linux-${arch}.${ext}",
-      "maintainer": "PharmaMind AI"
+      "maintainer": "PharmaMind AI <haianh02032005-rgb@users.noreply.github.com>"
     },
     "nsis": {
       "oneClick": false,
