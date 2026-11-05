@@ -9,6 +9,11 @@
     "name": "PharmaMind AI",
     "email": "haianh02032005-rgb@users.noreply.github.com"
   },
+  "homepage": "https://pharmamind-ai-demo.onrender.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haianh02032005-rgb/PharaMind1.git"
+  },
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
