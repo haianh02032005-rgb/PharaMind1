@@ -1,0 +1,112 @@
+name: Build Raspberry Pi desktop app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "desktop-rpi-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-raspberry-pi:
+    name: Build and verify Raspberry Pi 5 ARM64 packages
+    runs-on: ubuntu-22.04-arm
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Verify native ARM64 runner
+        run: |
+          test "$(uname -m)" = "aarch64"
+          uname -a
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev
+
+      - name: Build ARM64 AppImage and Debian package
+        run: |
+          set -o pipefail
+          if npm run dist:linux:arm64 2>&1 | tee raspberry-pi-build.log; then
+            exit 0
+          fi
+          summary="$(tail -n 25 raspberry-pi-build.log | tr '\n' ' ' | cut -c 1-3000)"
+          summary="${summary//'%'/'%25'}"
+          echo "::error title=Raspberry Pi packaging failed::$summary"
+          exit 1
+
+      - name: Smoke test ARM64 application
+        run: |
+          if ! command -v xvfb-run >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes xvfb
+          fi
+          set +e
+          timeout 20s xvfb-run -a \
+            dist/linux-arm64-unpacked/pharmamind-ai \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            > dist/raspberry-pi-smoke.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 124 ]; then
+            cat dist/raspberry-pi-smoke.log
+            echo "::error title=Raspberry Pi smoke test failed::Packaged ARM64 app exited unexpectedly with status $status"
+            exit "$status"
+          fi
+          echo "Packaged ARM64 app remained healthy for the 20-second smoke test."
+
+      - name: Verify Raspberry Pi package architecture and metadata
+        run: |
+          deb_file="$(find dist -maxdepth 1 -name '*arm64.deb' -print -quit)"
+          appimage_file="$(find dist -maxdepth 1 -name '*arm64.AppImage' -print -quit)"
+          test -n "$deb_file"
+          test -n "$appimage_file"
+          test "$(dpkg-deb -f "$deb_file" Architecture)" = "arm64"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --contents "$deb_file" | grep -E 'pharmamind-ai|PharmaMind'
+          file "$appimage_file" | grep -E 'ARM aarch64|ARM64'
+
+      - name: Generate SHA-256 checksums
+        run: sha256sum dist/*arm64.AppImage dist/*arm64.deb > dist/SHA256SUMS-raspberry-pi.txt
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PharmaMind-AI-Raspberry-Pi-5-ARM64
+          path: |
+            desktop/dist/*arm64.AppImage
+            desktop/dist/*arm64.deb
+            desktop/dist/SHA256SUMS-raspberry-pi.txt
+            desktop/dist/raspberry-pi-smoke.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish Raspberry Pi GitHub release
+        if: startsWith(github.ref, 'refs/tags/desktop-rpi-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/*arm64.AppImage \
+            dist/*arm64.deb \
+            dist/SHA256SUMS-raspberry-pi.txt \
+            --title "PharmaMind AI for Raspberry Pi 5 ${GITHUB_REF_NAME#desktop-rpi-v}" \
+            --notes "Native Linux ARM64 release for Raspberry Pi 5. Requires Raspberry Pi OS 64-bit or Ubuntu ARM64 with a graphical desktop. The DEB package is recommended."

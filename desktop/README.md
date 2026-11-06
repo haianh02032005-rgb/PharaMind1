@@ -45,3 +45,25 @@ Two x64 packages are produced in `dist/`:
 The installed application is available from the desktop application menu as
 **PharmaMind AI**. Both packages use the same locked-down Electron settings and
 connect to the public PharmaMind service over HTTPS.
+
+## Raspberry Pi 5
+
+Raspberry Pi 5 requires a 64-bit operating system with a graphical desktop.
+Build the native ARM64 packages on an ARM64 Linux host with:
+
+```bash
+npm ci
+npm run dist:linux:arm64
+```
+
+The ARM64 DEB package is recommended for Raspberry Pi OS 64-bit. Install it
+with the desktop package manager or:
+
+```bash
+sudo apt install ./PharmaMind-AI-Desktop-*-linux-arm64.deb
+```
+
+The ARM64 AppImage is the portable alternative. Raspberry Pi OS Lite is not
+supported because the application requires a graphical session. On ARM64,
+Electron automatically selects Wayland or X11 and allows a smaller minimum
+window size for Raspberry Pi displays.

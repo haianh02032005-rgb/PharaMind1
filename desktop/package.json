@@ -1,6 +1,6 @@
 {
   "name": "pharmamind-ai-desktop",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "PharmaMind AI desktop application for Windows and Linux",
   "desktopName": "pharmamind-ai.desktop",
   "main": "main.cjs",
@@ -18,7 +18,9 @@
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis --x64",
-    "dist:linux": "electron-builder --linux AppImage deb --x64 --publish never"
+    "dist:linux": "npm run dist:linux:x64",
+    "dist:linux:x64": "electron-builder --linux AppImage deb --x64 --publish never",
+    "dist:linux:arm64": "electron-builder --linux AppImage deb --arm64 --publish never"
   },
   "devDependencies": {
     "electron": "45.2.2",
@@ -55,16 +57,10 @@
     "linux": {
       "target": [
         {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
+          "target": "AppImage"
         },
         {
-          "target": "deb",
-          "arch": [
-            "x64"
-          ]
+          "target": "deb"
         }
       ],
       "icon": "assets/icon.png",

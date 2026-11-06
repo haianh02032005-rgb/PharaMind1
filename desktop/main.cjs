@@ -3,6 +3,13 @@ const { app, BrowserWindow, Menu, shell, session } = require("electron");
 
 const SYSTEM_URL = "https://pharmamind-ai-demo.onrender.com";
 const SYSTEM_ORIGIN = new URL(SYSTEM_URL).origin;
+const IS_LINUX_ARM64 = process.platform === "linux" && process.arch === "arm64";
+
+// Raspberry Pi OS can run either Wayland or X11. Let Chromium select the
+// available display backend instead of forcing one that may not exist.
+if (IS_LINUX_ARM64) {
+  app.commandLine.appendSwitch("ozone-platform-hint", "auto");
+}
 
 app.setAppUserModelId("ai.pharmamind.desktop");
 
@@ -27,10 +34,10 @@ function openExternalUrl(value) {
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 820,
-    minWidth: 960,
-    minHeight: 640,
+    width: IS_LINUX_ARM64 ? 1180 : 1280,
+    height: IS_LINUX_ARM64 ? 720 : 820,
+    minWidth: IS_LINUX_ARM64 ? 720 : 960,
+    minHeight: IS_LINUX_ARM64 ? 480 : 640,
     show: false,
     backgroundColor: "#f7fafa",
     autoHideMenuBar: true,
