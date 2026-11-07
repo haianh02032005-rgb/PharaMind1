@@ -170,14 +170,14 @@ def test_compartment_assign_unassign_duplicate_and_schedule_aware_detail():
 
         # 1. Assign med_a to compartment 8 -> status AVAILABLE (§81)
         assign_res = client.put(
-            f"/families/{fam_a}/cabinets/{cab_a}/compartments/8/medication",
+            f"/families/{fam_a}/cabinets/{cab_a}/compartments/6/medication",
             headers={"Authorization": f"Bearer {token_a}"},
             json={"family_medication_id": med_a["id"]},
         )
         assert assign_res.status_code == 200
         comp_8 = assign_res.json()
-        assert comp_8["position"] == 8
-        assert comp_8["object_id"] == "drawer_08"
+        assert comp_8["position"] == 6
+        assert comp_8["object_id"] == "drawer_06"
         assert comp_8["status"] == "AVAILABLE"
         assert comp_8["family_medication_id"] == med_a["id"]
         assert comp_8["medication"]["id"] == med_a["id"]
@@ -200,12 +200,12 @@ def test_compartment_assign_unassign_duplicate_and_schedule_aware_detail():
 
         # 4. Compartment detail includes medication + next_dose (§41, §42)
         detail_res = client.get(
-            f"/families/{fam_a}/cabinets/{cab_a}/compartments/8",
+            f"/families/{fam_a}/cabinets/{cab_a}/compartments/6",
             headers={"Authorization": f"Bearer {token_a}"},
         )
         assert detail_res.status_code == 200
         detail = detail_res.json()
-        assert detail["position"] == 8
+        assert detail["position"] == 6
         assert detail["medication"]["id"] == med_a["id"]
         assert detail["next_dose"] is not None
         assert detail["next_dose"]["time"] == "20:00"
@@ -213,7 +213,7 @@ def test_compartment_assign_unassign_duplicate_and_schedule_aware_detail():
 
         # 5. Unassign medication from compartment 8 -> status EMPTY (§31)
         unassign_res = client.delete(
-            f"/families/{fam_a}/cabinets/{cab_a}/compartments/8/medication",
+            f"/families/{fam_a}/cabinets/{cab_a}/compartments/6/medication",
             headers={"Authorization": f"Bearer {token_a}"},
         )
         assert unassign_res.status_code == 200

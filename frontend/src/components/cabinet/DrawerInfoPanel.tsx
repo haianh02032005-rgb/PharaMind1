@@ -51,6 +51,11 @@ export interface DrawerInfoPanelProps {
   onUnassignMedication?: (position: number) => Promise<void>;
   onRetry?: () => void;
   onClosePanel?: () => void;
+  hardwareMode?: boolean;
+  hardwareConnected?: boolean;
+  unlockDisabled?: boolean;
+  ledState?: "ON" | "OFF";
+  onSetLed?: (position: number, state: "ON" | "OFF") => Promise<void>;
 }
 
 export const DrawerInfoPanel: React.FC<DrawerInfoPanelProps> = ({
@@ -67,6 +72,11 @@ export const DrawerInfoPanel: React.FC<DrawerInfoPanelProps> = ({
   onUnassignMedication,
   onRetry,
   onClosePanel,
+  hardwareMode = false,
+  hardwareConnected = false,
+  unlockDisabled = false,
+  ledState = "OFF",
+  onSetLed,
 }) => {
   const [showMore, setShowMore] = useState(false);
   const [selectedMedId, setSelectedMedId] = useState("");
@@ -261,14 +271,16 @@ export const DrawerInfoPanel: React.FC<DrawerInfoPanelProps> = ({
       <div style={{ display: "flex", gap: 10 }}>
         <button
           type="button"
-          disabled={busy || isOffline}
+          disabled={busy || isOffline || (hardwareMode && (!hardwareConnected || unlockDisabled || revealData.is_open))}
           onClick={handleToggleDrawer}
           className={`btn ${
             revealData.is_open ? "btn-outline" : "btn-primary"
           }`}
           style={{ flex: 1 }}
         >
-          {revealData.is_open ? (
+          {hardwareMode && revealData.is_open ? (
+            <>Ngăn đang mở · đóng bằng tay</>
+          ) : revealData.is_open ? (
             <>
               <DoorClosed size={18} />
               Đóng ngăn {revealData.position}
@@ -276,10 +288,30 @@ export const DrawerInfoPanel: React.FC<DrawerInfoPanelProps> = ({
           ) : (
             <>
               <DoorOpen size={18} />
-              Mở ngăn {revealData.position} (Xem thuốc bay ra)
+              {hardwareMode ? `Mở chốt hộp ${revealData.position}` : `Mở ngăn ${revealData.position} (Xem thuốc bay ra)`}
             </>
           )}
         </button>
+        {hardwareMode && onSetLed && (
+          <button
+            type="button"
+            className="btn btn-outline"
+            disabled={!hardwareConnected || busy}
+            onClick={async () => {
+              setActionError(null);
+              setBusy(true);
+              try {
+                await onSetLed(revealData.position, ledState === "ON" ? "OFF" : "ON");
+              } catch (err) {
+                setActionError(err instanceof Error ? err.message : "Không thể điều khiển LED");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Đèn LED: {ledState === "ON" ? "Bật" : "Tắt"}
+          </button>
+        )}
       </div>
 
       {/* Empty State (§22): No capsule fly-out; show empty message & assign CTA */}

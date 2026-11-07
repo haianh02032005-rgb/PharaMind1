@@ -120,7 +120,7 @@ export function buildMedicationPlaceholderGroup(
 }
 
 /**
- * Creates a single interactive 3D compartment drawer (`drawer_01`..`drawer_09`).
+ * Creates a single interactive 3D compartment drawer (`drawer_01`..`drawer_06`).
  */
 export function createCompartmentMeshNode(
   position: number,
@@ -133,7 +133,7 @@ export function createCompartmentMeshNode(
   group.userData = { position, objectId };
 
   const xs = [-0.39, 0.0, 0.39];
-  const ys = [0.27, -0.1, -0.47];
+  const ys = [0.17, -0.27];
   const baseZ = 0.07;
 
   group.position.set(xs[colIndex], ys[rowIndex], baseZ);
@@ -249,9 +249,16 @@ export function syncCompartmentMeshVisuals(
   }
 
   // LED indicator bar (pulse on next dose)
-  node.ledBarMaterial.color.copy(baseColor);
-  node.ledBarMaterial.emissive.copy(baseColor);
-  if (visual.isHighlightedNextDose) {
+  const ledColor = comp.led_state === "ON"
+    ? new THREE.Color(0x2fa66a)
+    : comp.led_state === "OFF" ? new THREE.Color(0x456462) : baseColor;
+  node.ledBarMaterial.color.copy(ledColor);
+  node.ledBarMaterial.emissive.copy(ledColor);
+  if (comp.led_state === "ON") {
+    node.ledBarMaterial.emissiveIntensity = 0.9;
+  } else if (comp.led_state === "OFF") {
+    node.ledBarMaterial.emissiveIntensity = 0.02;
+  } else if (visual.isHighlightedNextDose) {
     const pulse = 0.45 + 0.4 * Math.sin(elapsedTime * 5.0);
     node.ledBarMaterial.emissiveIntensity = pulse;
   } else if (comp.is_open || visual.isSelected) {

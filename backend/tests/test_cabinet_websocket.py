@@ -90,22 +90,22 @@ def test_cabinet_websocket_authorization_and_realtime_events():
             assert msg_online["cabinet_id"] == cab_id
 
             client.post(
-                f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/open",
+                f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/open",
                 headers={"Authorization": f"Bearer {owner_token}"},
             )
             msg_open = ws.receive_json()
             assert msg_open["type"] == "COMPARTMENT_OPEN"
             assert msg_open["cabinet_id"] == cab_id
-            assert msg_open["compartment"]["position"] == 8
-            assert msg_open["compartment"]["object_id"] == "drawer_08"
+            assert msg_open["compartment"]["position"] == 6
+            assert msg_open["compartment"]["object_id"] == "drawer_06"
 
             client.post(
-                f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/close",
+                f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/close",
                 headers={"Authorization": f"Bearer {owner_token}"},
             )
             msg_close = ws.receive_json()
             assert msg_close["type"] == "COMPARTMENT_CLOSE"
-            assert msg_close["compartment"]["position"] == 8
+            assert msg_close["compartment"]["position"] == 6
     finally:
         _cleanup([owner_id, outsider_id], family_ids)
 

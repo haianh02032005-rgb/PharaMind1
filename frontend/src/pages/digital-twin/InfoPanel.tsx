@@ -22,6 +22,10 @@ interface InfoPanelProps {
   onCloseCompartment: (position: number) => Promise<void>;
   onAssignMedication?: (position: number, medicationId: number) => Promise<void>;
   onUnassignMedication?: (position: number) => Promise<void>;
+  hardwareMode?: boolean;
+  hardwareConnected?: boolean;
+  unlockDisabled?: boolean;
+  onSetLed?: (position: number, state: "ON" | "OFF") => Promise<void>;
 }
 
 export const InfoPanel: React.FC<InfoPanelProps> = ({
@@ -33,6 +37,10 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   onCloseCompartment,
   onAssignMedication,
   onUnassignMedication,
+  hardwareMode,
+  hardwareConnected,
+  unlockDisabled,
+  onSetLed,
 }) => {
   const { elderlyMode, reducedMotion } = useUiStore();
   const revealStore = useDrawerRevealStore();
@@ -69,6 +77,11 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
       onCloseCompartment={onCloseCompartment}
       onAssignMedication={onAssignMedication}
       onUnassignMedication={onUnassignMedication}
+      hardwareMode={hardwareMode}
+      hardwareConnected={hardwareConnected}
+      unlockDisabled={unlockDisabled}
+      ledState={compartment?.led_state}
+      onSetLed={onSetLed}
     />
   );
 };

@@ -45,8 +45,8 @@ def _cleanup(user_ids: list[int], family_ids: list[int]) -> None:
         session.commit()
 
 
-def test_create_cabinet_auto_9_compartments_duplicate_device_code_and_second_active_cabinet():
-    """TASK 09 §12, §23–28, §77–80: Create cabinet auto-creates 9 compartments (positions 1..9), rejects duplicate device_code (409) & second active cabinet (409)."""
+def test_create_cabinet_auto_6_compartments_duplicate_device_code_and_second_active_cabinet():
+    """Create cabinet with six physical boxes; reject duplicate device and second active cabinet."""
     user_id, _, token = _create_user_and_token("cab_create")
     family_ids: list[int] = []
 
@@ -67,7 +67,7 @@ def test_create_cabinet_auto_9_compartments_duplicate_device_code_and_second_act
 
         dev_code = f"PM-CAB-{uuid4().hex[:8].upper()}"
 
-        # 1. Create cabinet -> 201 with 9 compartments (§77, §80)
+        # 1. Create cabinet -> 201 with 6 compartments
         res = client.post(
             f"/families/{fam_1}/cabinets",
             headers={"Authorization": f"Bearer {token}"},
@@ -84,12 +84,12 @@ def test_create_cabinet_auto_9_compartments_duplicate_device_code_and_second_act
         assert cab["device_code"] == dev_code
         assert cab["status"] == "OFFLINE"
         assert cab["hardware_mode"] == "SIMULATOR"
-        assert len(cab["compartments"]) == 9
+        assert len(cab["compartments"]) == 6
         assert [c["position"] for c in cab["compartments"]] == list(
-            range(1, 10)
+            range(1, 7)
         )
         assert [c["object_id"] for c in cab["compartments"]] == [
-            f"drawer_{pos:02d}" for pos in range(1, 10)
+            f"drawer_{pos:02d}" for pos in range(1, 7)
         ]
         assert all(c["status"] == "EMPTY" for c in cab["compartments"])
         assert all(c["is_open"] is False for c in cab["compartments"])
@@ -130,7 +130,7 @@ def test_create_cabinet_auto_9_compartments_duplicate_device_code_and_second_act
         )
         assert comps_res.status_code == 200
         assert [c["position"] for c in comps_res.json()["items"]] == list(
-            range(1, 10)
+            range(1, 7)
         )
     finally:
         _cleanup([user_id], family_ids)

@@ -99,7 +99,7 @@ export const SettingsPage: React.FC = () => {
                 Chế độ hiển thị mặc định cho Tủ thuốc
               </div>
               <div style={{ fontSize: "0.85rem", color: "var(--pm-text-secondary)" }}>
-                Chọn giữa Mô hình 3D tương tác hoặc Lưới 2D 3×3 đơn giản.
+                Chọn giữa Mô hình 3D tương tác hoặc Lưới 2D 3×2 đơn giản.
               </div>
             </div>
             <button
@@ -110,7 +110,7 @@ export const SettingsPage: React.FC = () => {
               }
             >
               <Sparkles size={14} />
-              {cabinetViewMode === "3D" ? "3D Digital Twin" : "Lưới 2D 3×3"}
+              {cabinetViewMode === "3D" ? "3D Digital Twin" : "Lưới 2D 3×2"}
             </button>
           </div>
         </div>

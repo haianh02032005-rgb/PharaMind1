@@ -16,6 +16,7 @@ import { AvailableMedicationOption } from "../digital-twin/InfoPanel";
 import { useDrawerRevealController } from "../../features/cabinet/reveal/hooks";
 import { CapsulePopout } from "../../components/cabinet/CapsulePopout";
 import { MedicationRevealCard } from "../../components/cabinet/MedicationRevealCard";
+import { buildRevealDataFromCompartment } from "../../features/cabinet/reveal/types";
 
 export const CabinetPage: React.FC = () => {
   const { activeFamilyId } = useFamilyStore();
@@ -58,6 +59,7 @@ export const CabinetPage: React.FC = () => {
 
   const dt = useDigitalTwinController(activeFamilyId, cabinetId);
   const selectedCompartment = useDigitalTwinStore(selectSelectedCompartment);
+  const legacyCompartmentCount = useDigitalTwinStore((state) => state.legacyCompartmentCount);
   const reveal = useDrawerRevealController({
     familyId: activeFamilyId,
     cabinetId,
@@ -93,7 +95,7 @@ export const CabinetPage: React.FC = () => {
         />
         <h3>Chưa kết nối Tủ thuốc Thông minh</h3>
         <p style={{ color: "var(--pm-text-secondary)", marginTop: 6 }}>
-          Hãy mở mục Digital Twin 3D để khởi tạo tủ thuốc 9 ngăn cho gia đình.
+          Hãy mở mục Digital Twin 3D để khởi tạo tủ thuốc 6 hộp cho gia đình.
         </p>
       </div>
     );
@@ -114,10 +116,10 @@ export const CabinetPage: React.FC = () => {
       >
         <div>
           <h1 style={{ fontSize: "1.55rem", fontWeight: 700 }}>
-            Tủ thuốc Thông minh 9 Ngăn
+            Tủ thuốc Thông minh 6 Hộp
           </h1>
           <p style={{ color: "var(--pm-text-secondary)" }}>
-            Chuyển đổi linh hoạt giữa Chế độ Đơn giản (Lưới 3×3 dễ đọc cho người lớn
+            Chuyển đổi linh hoạt giữa Chế độ Đơn giản (Lưới 3×2 dễ đọc cho người lớn
             tuổi) và Chế độ 3D (Digital Twin).
           </p>
         </div>
@@ -131,7 +133,7 @@ export const CabinetPage: React.FC = () => {
             onClick={() => setCabinetViewMode("SIMPLE")}
           >
             <Grid size={17} />
-            Chế độ Đơn giản (2D 3×3)
+            Chế độ Đơn giản (2D 3×2)
           </button>
           <button
             type="button"
@@ -146,11 +148,18 @@ export const CabinetPage: React.FC = () => {
         </div>
       </div>
 
+      {legacyCompartmentCount > 0 && (
+        <div className="alert-banner alert-warning" style={{ marginBottom: 16 }}>
+          Tủ cũ còn {legacyCompartmentCount} ngăn vượt quá 6 hộp vật lý. Hãy chuyển thuốc ở các ngăn đó sang hộp 1–6 trước khi dùng tủ thật.
+        </div>
+      )}
       <StatusBar
         cabinet={dt.cabinet}
         wsConnected={dt.wsConnected}
         onToggleOnline={dt.handleToggleOnline}
         onSyncState={dt.handleSyncState}
+        hardwareMode={dt.isPiHardwareApp}
+        hardwareConnected={dt.hardwareConnected}
       />
 
       {cabinetViewMode === "3D" ? (
@@ -160,7 +169,11 @@ export const CabinetPage: React.FC = () => {
           selectedPosition={dt.selectedPosition}
           hoveredPosition={dt.hoveredPosition}
           nextDosePosition={dt.nextDosePosition}
-          cabinetStatus={dt.cabinet?.status}
+          cabinetStatus={dt.effectiveCabinetStatus}
+          hardwareMode={dt.isPiHardwareApp}
+          hardwareConnected={dt.hardwareConnected}
+          unlockDisabled={dt.unlockDisabled}
+          onSetLed={dt.handleSetLed}
           availableMedications={availableMeds}
           onSelectCompartment={dt.selectCompartment}
           onHoverCompartment={dt.hoverCompartment}
@@ -170,19 +183,19 @@ export const CabinetPage: React.FC = () => {
           onUnassignMedication={handleUnassignMed}
         />
       ) : (
-        /* Simple Mode 2D 3x3 Grid for Elderly Accessibility */
+        /* Simple Mode 2D 3x2 Grid for Elderly Accessibility */
         <div className="dt-layout">
           <div className="card">
             <h3 style={{ marginBottom: 14 }}>
-              Sơ đồ 9 Ngăn Tủ Thuốc (Chế độ Đơn giản Dễ đọc)
+              Sơ đồ 6 Hộp Tủ Thuốc (Chế độ Đơn giản Dễ đọc)
             </h3>
-            <div className="cabinet-grid-3x3">
+            <div className="cabinet-grid-3x2">
               {dt.compartments.map((comp) => {
                 const vis = selectCompartmentVisualStatus(
                   comp,
                   dt.selectedPosition,
                   dt.nextDosePosition,
-                  dt.cabinet?.status
+                  dt.effectiveCabinetStatus
                 );
                 return (
                   <div
@@ -211,7 +224,7 @@ export const CabinetPage: React.FC = () => {
 
                     <div style={{ margin: "10px 0" }}>
                       {comp.medication ? (
-                        comp.is_open && dt.cabinet?.status !== "OFFLINE" ? (
+                        comp.is_open && dt.effectiveCabinetStatus !== "OFFLINE" ? (
                           <CapsulePopout
                             visible={true}
                             medicationName={comp.medication.name}
@@ -258,7 +271,9 @@ export const CabinetPage: React.FC = () => {
           </div>
 
           <MedicationRevealCard
-            revealData={reveal.revealData}
+            revealData={dt.isPiHardwareApp && selectedCompartment
+              ? buildRevealDataFromCompartment(selectedCompartment, cabinetId, dt.effectiveCabinetStatus ?? "OFFLINE", dt.nextDosePosition)
+              : reveal.revealData}
             isPanelOpen={Boolean(selectedCompartment)}
             isAnimating={reveal.isAnimating}
             animationMode={reveal.animationMode}
@@ -267,15 +282,20 @@ export const CabinetPage: React.FC = () => {
             availableMedications={availableMeds}
             onOpenCompartment={async (pos) => {
               await dt.handleOpenCompartment(pos);
-              await reveal.triggerReveal(pos, "USER", true);
+              if (!dt.isPiHardwareApp) await reveal.triggerReveal(pos, "USER", true);
             }}
             onCloseCompartment={async (pos) => {
               await dt.handleCloseCompartment(pos);
-              await reveal.triggerReveal(pos, "USER", false);
+              if (!dt.isPiHardwareApp) await reveal.triggerReveal(pos, "USER", false);
             }}
             onAssignMedication={handleAssignMed}
             onUnassignMedication={handleUnassignMed}
             onRetry={reveal.retryFetchReveal}
+            hardwareMode={dt.isPiHardwareApp}
+            hardwareConnected={dt.hardwareConnected}
+            unlockDisabled={dt.unlockDisabled}
+            ledState={selectedCompartment?.led_state}
+            onSetLed={dt.handleSetLed}
           />
         </div>
       )}

@@ -16,7 +16,7 @@ class HardwareSimulator(HardwareAdapter):
         positions: list[int] | None = None,
     ) -> dict[str, Any]:
         if cabinet_id not in self._cabinets:
-            pos_list = positions or list(range(1, 10))
+            pos_list = positions or list(range(1, 7))
             self._cabinets[cabinet_id] = {
                 "cabinet_id": cabinet_id,
                 "status": status,
@@ -47,7 +47,7 @@ class HardwareSimulator(HardwareAdapter):
         status: str = "OFFLINE",
         positions: list[int] | None = None,
     ) -> dict[str, Any]:
-        pos_list = positions or list(range(1, 10))
+        pos_list = positions or list(range(1, 7))
         self._cabinets[cabinet_id] = {
             "cabinet_id": cabinet_id,
             "status": status,

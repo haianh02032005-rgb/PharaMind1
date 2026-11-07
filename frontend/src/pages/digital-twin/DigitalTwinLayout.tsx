@@ -17,6 +17,10 @@ interface DigitalTwinLayoutProps {
   onCloseCompartment: (position: number) => Promise<void>;
   onAssignMedication?: (position: number, medicationId: number) => Promise<void>;
   onUnassignMedication?: (position: number) => Promise<void>;
+  hardwareMode?: boolean;
+  hardwareConnected?: boolean;
+  unlockDisabled?: boolean;
+  onSetLed?: (position: number, state: "ON" | "OFF") => Promise<void>;
 }
 
 export const DigitalTwinLayout: React.FC<DigitalTwinLayoutProps> = ({
@@ -33,6 +37,10 @@ export const DigitalTwinLayout: React.FC<DigitalTwinLayoutProps> = ({
   onCloseCompartment,
   onAssignMedication,
   onUnassignMedication,
+  hardwareMode,
+  hardwareConnected,
+  unlockDisabled,
+  onSetLed,
 }) => {
   return (
     <div className="dt-layout">
@@ -55,6 +63,10 @@ export const DigitalTwinLayout: React.FC<DigitalTwinLayoutProps> = ({
         onCloseCompartment={onCloseCompartment}
         onAssignMedication={onAssignMedication}
         onUnassignMedication={onUnassignMedication}
+        hardwareMode={hardwareMode}
+        hardwareConnected={hardwareConnected}
+        unlockDisabled={unlockDisabled}
+        onSetLed={onSetLed}
       />
     </div>
   );

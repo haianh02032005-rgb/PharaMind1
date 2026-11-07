@@ -72,11 +72,11 @@ def test_cabinet_events_logged_and_no_medication_taken_event():
             headers={"Authorization": f"Bearer {token}"},
         )
         client.post(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/open",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/open",
             headers={"Authorization": f"Bearer {token}"},
         )
         client.post(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/close",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/close",
             headers={"Authorization": f"Bearer {token}"},
         )
         client.post(
@@ -104,7 +104,7 @@ def test_cabinet_events_logged_and_no_medication_taken_event():
             headers={"Authorization": f"Bearer {token}"},
         ).json()["items"]
         assert len(open_events) == 1
-        assert open_events[0]["compartment_position"] == 8
+        assert open_events[0]["compartment_position"] == 6
     finally:
         _cleanup([user_id], family_ids)
 

@@ -64,6 +64,7 @@ export const DigitalTwinPage: React.FC = () => {
 
   const dt = useDigitalTwinController(activeFamilyId, cabinetId);
   const selectedCompartment = useDigitalTwinStore(selectSelectedCompartment);
+  const legacyCompartmentCount = useDigitalTwinStore((state) => state.legacyCompartmentCount);
   const reveal = useDrawerRevealController({
     familyId: activeFamilyId,
     cabinetId,
@@ -85,11 +86,11 @@ export const DigitalTwinPage: React.FC = () => {
           body: JSON.stringify({
             name: "Tủ thuốc thông minh Gia đình",
             device_code: code,
-            notes: "Tủ thuốc 9 ngăn đồng bộ Digital Twin 3D",
+            notes: "Tủ thuốc 6 hộp đồng bộ Digital Twin 3D",
           }),
         }
       );
-      await digitalTwinApi.setSimulatorOnline(activeFamilyId, created.id);
+      if (!dt.isPiHardwareApp) await digitalTwinApi.setSimulatorOnline(activeFamilyId, created.id);
       setCabinetId(created.id);
     } finally {
       setCreatingCabinet(false);
@@ -132,7 +133,7 @@ export const DigitalTwinPage: React.FC = () => {
           style={{ color: "var(--pm-primary)", margin: "0 auto 12px" }}
         />
         <h2 style={{ marginBottom: 8 }}>
-          Khởi tạo Tủ thuốc Thông minh 9 Ngăn (Digital Twin 3D)
+          Khởi tạo Tủ thuốc Thông minh 6 Hộp (Digital Twin 3D)
         </h2>
         <p
           style={{
@@ -142,7 +143,7 @@ export const DigitalTwinPage: React.FC = () => {
           }}
         >
           Gia đình bạn chưa có tủ thuốc thông minh được kết nối. Nhấn nút bên dưới để
-          khởi tạo tủ thuốc 9 ngăn và đồng bộ trực tiếp với mô hình Digital Twin 3D.
+          khởi tạo tủ thuốc 6 hộp và đồng bộ trực tiếp với mô hình Digital Twin 3D.
         </p>
         <button
           type="button"
@@ -152,8 +153,8 @@ export const DigitalTwinPage: React.FC = () => {
         >
           <PlusCircle size={18} />
           {creatingCabinet
-            ? "Đang khởi tạo tủ thuốc 9 ngăn..."
-            : "Tạo Tủ thuốc Thông minh 9 Ngăn ngay"}
+            ? "Đang khởi tạo tủ thuốc 6 hộp..."
+            : "Tạo Tủ thuốc Thông minh 6 Hộp ngay"}
         </button>
       </div>
     );
@@ -177,7 +178,7 @@ export const DigitalTwinPage: React.FC = () => {
             Digital Twin 3D — {dt.cabinet?.name || "Tủ thuốc Thông minh"}
           </h1>
           <p style={{ color: "var(--pm-text-secondary)", fontSize: "0.92rem" }}>
-            Mô hình song sinh số 3D thời gian thực đồng bộ trực tiếp với trạng thái 9 ngăn tủ thuốc.
+            Mô hình 3D thời gian thực đồng bộ với 6 hộp của tủ thuốc.
           </p>
         </div>
 
@@ -204,11 +205,18 @@ export const DigitalTwinPage: React.FC = () => {
       </div>
 
       {/* Status Bar */}
+      {legacyCompartmentCount > 0 && (
+        <div className="alert-banner alert-warning" style={{ marginBottom: 16 }}>
+          Tủ cũ còn {legacyCompartmentCount} ngăn vượt quá 6 hộp vật lý. Hãy chuyển thuốc ở các ngăn đó sang hộp 1–6 trước khi dùng tủ thật.
+        </div>
+      )}
       <StatusBar
         cabinet={dt.cabinet}
         wsConnected={dt.wsConnected}
         onToggleOnline={dt.handleToggleOnline}
         onSyncState={dt.handleSyncState}
+        hardwareMode={dt.isPiHardwareApp}
+        hardwareConnected={dt.hardwareConnected}
       />
 
       {/* 2-Column 3D Digital Twin Layout */}
@@ -218,7 +226,11 @@ export const DigitalTwinPage: React.FC = () => {
         selectedPosition={dt.selectedPosition}
         hoveredPosition={dt.hoveredPosition}
         nextDosePosition={dt.nextDosePosition}
-        cabinetStatus={dt.cabinet?.status}
+        cabinetStatus={dt.effectiveCabinetStatus}
+        hardwareMode={dt.isPiHardwareApp}
+        hardwareConnected={dt.hardwareConnected}
+        unlockDisabled={dt.unlockDisabled}
+        onSetLed={dt.handleSetLed}
         availableMedications={availableMeds}
         onSelectCompartment={(pos) => {
           dt.selectCompartment(pos);
@@ -227,11 +239,11 @@ export const DigitalTwinPage: React.FC = () => {
         onHoverCompartment={(pos) => dt.hoverCompartment(pos)}
         onOpenCompartment={async (pos) => {
           await dt.handleOpenCompartment(pos);
-          await reveal.triggerReveal(pos, "USER", true);
+          if (!dt.isPiHardwareApp) await reveal.triggerReveal(pos, "USER", true);
         }}
         onCloseCompartment={async (pos) => {
           await dt.handleCloseCompartment(pos);
-          await reveal.triggerReveal(pos, "USER", false);
+          if (!dt.isPiHardwareApp) await reveal.triggerReveal(pos, "USER", false);
         }}
         onAssignMedication={handleAssignMed}
         onUnassignMedication={handleUnassignMed}

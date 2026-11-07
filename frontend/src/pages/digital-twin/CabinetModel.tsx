@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   CompartmentMeshNode,
   createCompartmentMeshNode,
@@ -13,12 +12,10 @@ export interface CabinetSceneGraph {
 
 /**
  * Builds the complete PharmaMind 3D Smart Medicine Cabinet scene graph
- * (`cabinet_body`, `top_screen`, `handle`, and `drawer_01`..`drawer_09`),
- * and asynchronously validates `/models/pharmamind_cabinet.glb`.
+ * (`cabinet_body`, `top_screen`, `handle`, and `drawer_01`..`drawer_06`),
+ * with a procedural six-box model matching the Raspberry Pi hardware.
  */
-export function buildPharmaMindCabinetScene(
-  onGlbStatus?: (loaded: boolean) => void
-): CabinetSceneGraph {
+export function buildPharmaMindCabinetScene(): CabinetSceneGraph {
   const root = new THREE.Group();
   root.name = "PharmaMindSmartCabinet";
 
@@ -26,7 +23,7 @@ export function buildPharmaMindCabinetScene(
   const bodyGroup = new THREE.Group();
   bodyGroup.name = "cabinet_body";
 
-  const outerShellGeo = new THREE.BoxGeometry(1.36, 1.58, 0.52);
+  const outerShellGeo = new THREE.BoxGeometry(1.36, 1.2, 0.52);
   const outerShellMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     roughness: 0.22,
@@ -38,15 +35,15 @@ export function buildPharmaMindCabinetScene(
   outerShell.receiveShadow = true;
   bodyGroup.add(outerShell);
 
-  // Soft mint inner frame accent around the 3x3 grid
-  const bezelGeo = new THREE.BoxGeometry(1.26, 1.22, 0.46);
+  // Soft mint inner frame accent around the 3x2 grid
+  const bezelGeo = new THREE.BoxGeometry(1.26, 0.82, 0.46);
   const bezelMat = new THREE.MeshStandardMaterial({
     color: 0xc8eee8,
     roughness: 0.28,
     metalness: 0.04,
   });
   const bezel = new THREE.Mesh(bezelGeo, bezelMat);
-  bezel.position.set(0, -0.1, -0.02);
+  bezel.position.set(0, -0.03, -0.02);
   bodyGroup.add(bezel);
 
   root.add(bodyGroup);
@@ -63,7 +60,7 @@ export function buildPharmaMindCabinetScene(
     metalness: 0.2,
   });
   const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-  screenMesh.position.set(0, 0.62, 0.21);
+  screenMesh.position.set(0, 0.48, 0.21);
   screenGroup.add(screenMesh);
   root.add(screenGroup);
 
@@ -78,23 +75,23 @@ export function buildPharmaMindCabinetScene(
     metalness: 0.15,
   });
   const topBar = new THREE.Mesh(topBarGeo, handleMat);
-  topBar.position.set(0, 0.86, -0.04);
+  topBar.position.set(0, 0.68, -0.04);
   handleGroup.add(topBar);
 
   const postGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.09, 16);
   const leftPost = new THREE.Mesh(postGeo, handleMat);
-  leftPost.position.set(-0.16, 0.81, -0.04);
+  leftPost.position.set(-0.16, 0.63, -0.04);
   const rightPost = new THREE.Mesh(postGeo, handleMat);
-  rightPost.position.set(0.16, 0.81, -0.04);
+  rightPost.position.set(0.16, 0.63, -0.04);
   handleGroup.add(leftPost, rightPost);
 
   root.add(handleGroup);
 
-  // 4. Nine interactive compartments (`drawer_01`..`drawer_09`)
+  // 4. Six interactive compartments (`drawer_01`..`drawer_06`)
   const drawers = new Map<number, CompartmentMeshNode>();
   const interactiveMeshes: THREE.Object3D[] = [];
 
-  for (let row = 0; row < 3; row++) {
+  for (let row = 0; row < 2; row++) {
     for (let col = 0; col < 3; col++) {
       const position = row * 3 + col + 1;
       const node = createCompartmentMeshNode(position, col, row);
@@ -106,28 +103,6 @@ export function buildPharmaMindCabinetScene(
           interactiveMeshes.push(child);
         }
       });
-    }
-  }
-
-  // Attempt to load `/models/pharmamind_cabinet.glb` to verify GLB asset integrity
-  if (typeof window !== "undefined") {
-    try {
-      const loader = new GLTFLoader();
-      loader.load(
-        "/models/pharmamind_cabinet.glb",
-        (gltf) => {
-          const hasDrawers =
-            gltf.scene.getObjectByName("drawer_01") !== undefined &&
-            gltf.scene.getObjectByName("drawer_09") !== undefined;
-          onGlbStatus?.(hasDrawers);
-        },
-        undefined,
-        () => {
-          onGlbStatus?.(false);
-        }
-      );
-    } catch {
-      onGlbStatus?.(false);
     }
   }
 

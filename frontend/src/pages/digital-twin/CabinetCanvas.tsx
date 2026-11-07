@@ -42,7 +42,6 @@ export const CabinetCanvas: React.FC<CabinetCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const [webglReady, setWebglReady] = useState(true);
-  const [glbVerified, setGlbVerified] = useState(true);
   const { reducedMotion, elderlyMode } = useUiStore();
   const animationMode = reducedMotion || elderlyMode ? "REDUCED" : "FULL";
 
@@ -137,9 +136,7 @@ export const CabinetCanvas: React.FC<CabinetCanvasProps> = ({
     scene.add(floor);
 
     // Build PharmaMind 3D Cabinet
-    const cabinetGraph = buildPharmaMindCabinetScene((loaded) => {
-      setGlbVerified(loaded);
-    });
+    const cabinetGraph = buildPharmaMindCabinetScene();
     sceneGraphRef.current = cabinetGraph;
     scene.add(cabinetGraph.root);
 
@@ -334,10 +331,10 @@ export const CabinetCanvas: React.FC<CabinetCanvasProps> = ({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Sparkles size={18} style={{ color: "var(--pm-primary)" }} />
           <span style={{ fontWeight: 700 }}>
-            Mô hình 3D Tủ thuốc Thông minh (9 Ngăn)
+            Mô hình 3D Tủ thuốc Thông minh (6 Hộp)
           </span>
           <span className="badge badge-primary" style={{ fontSize: "0.74rem" }}>
-            {glbVerified ? "GLB 3D Verified" : "3D Procedural Mesh"}
+            Mô hình 3D 6 hộp
           </span>
         </div>
 
@@ -417,7 +414,7 @@ export const CabinetCanvas: React.FC<CabinetCanvasProps> = ({
         })()}
       </div>
 
-      {/* Quick Interactive 3x3 Compartment Selector Strip beneath 3D Canvas */}
+      {/* Quick selector for the six physical compartments */}
       <div>
         <div
           style={{

@@ -38,8 +38,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build and bundle Raspberry Pi interface
+        env:
+          VITE_WS_BASE_URL: wss://pharmamind-ai-demo.onrender.com
+        run: |
+          npm ci --prefix ../frontend
+          npm run build --prefix ../frontend
+          npm run prepare:pi
+
       - name: Audit runtime dependencies
         run: npm audit --omit=dev
+
+      - name: Test Pi interface and API proxy
+        run: npm test
 
       - name: Build ARM64 AppImage and Debian package
         run: |
@@ -58,12 +69,27 @@ jobs:
             sudo apt-get update
             sudo apt-get install --yes xvfb
           fi
-          set +e
-          timeout 20s xvfb-run -a \
+          timeout 30s xvfb-run -a \
             dist/linux-arm64-unpacked/pharmamind-ai \
             --disable-gpu \
             --disable-dev-shm-usage \
-            > dist/raspberry-pi-smoke.log 2>&1
+            > dist/raspberry-pi-smoke.log 2>&1 &
+          app_pid=$!
+          local_ready=false
+          for attempt in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:18765/login | grep -q 'PharmaMind'; then
+              local_ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$local_ready" != true ]; then
+            cat dist/raspberry-pi-smoke.log
+            echo "::error title=Raspberry Pi UI failed::Bundled login page was not served locally"
+            exit 1
+          fi
+          set +e
+          wait "$app_pid"
           status=$?
           set -e
           if [ "$status" -ne 124 ]; then
@@ -71,7 +97,7 @@ jobs:
             echo "::error title=Raspberry Pi smoke test failed::Packaged ARM64 app exited unexpectedly with status $status"
             exit "$status"
           fi
-          echo "Packaged ARM64 app remained healthy for the 20-second smoke test."
+          echo "Bundled UI served successfully and ARM64 app remained healthy for 30 seconds."
 
       - name: Verify Raspberry Pi package architecture and metadata
         run: |

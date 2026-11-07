@@ -394,7 +394,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             ) : (
               <p style={{ color: "var(--pm-text-secondary)", fontSize: "0.9rem" }}>
-                Gia đình chưa khởi tạo tủ thuốc 9 ngăn. Hãy vào mục Digital Twin 3D để tạo tủ thuốc.
+                Gia đình chưa khởi tạo tủ thuốc 6 hộp. Hãy vào mục Digital Twin 3D để tạo tủ thuốc.
               </p>
             )}
           </div>

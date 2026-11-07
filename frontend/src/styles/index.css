@@ -407,8 +407,8 @@ body.reduced-motion *::after {
   }
 }
 
-/* Simple 3x3 Cabinet Grid for Elderly Mode / Simple Mode */
-.cabinet-grid-3x3 {
+/* Six-compartment 3x2 cabinet grid for Simple Mode */
+.cabinet-grid-3x2 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;

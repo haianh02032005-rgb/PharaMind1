@@ -7,6 +7,8 @@ interface StatusBarProps {
   wsConnected: boolean;
   onToggleOnline: () => void;
   onSyncState: () => void;
+  hardwareMode?: boolean;
+  hardwareConnected?: boolean;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -14,10 +16,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   wsConnected,
   onToggleOnline,
   onSyncState,
+  hardwareMode = false,
+  hardwareConnected = false,
 }) => {
   if (!cabinet) return null;
 
-  const isOnline = cabinet.status === "ONLINE";
+  const isOnline = hardwareMode ? hardwareConnected : cabinet.status === "ONLINE";
   const formattedLastSeen = cabinet.last_seen_at
     ? new Date(cabinet.last_seen_at).toLocaleTimeString("vi-VN", {
         hour: "2-digit",
@@ -50,13 +54,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         <span className="badge badge-primary">
           <Cpu size={14} />
-          Chế độ: {cabinet.hardware_mode}
+          Chế độ: {hardwareMode ? "Raspberry Pi 5" : cabinet.hardware_mode}
         </span>
 
         <span
           className={`badge ${wsConnected ? "badge-success" : "badge-warning"}`}
         >
-          ● Realtime WS: {wsConnected ? "Đã kết nối" : "Polling dự phòng"}
+          ● {hardwareMode ? "Phần cứng" : "Realtime WS"}: {hardwareMode ? (hardwareConnected ? "Đã kết nối" : "Đang kết nối lại") : wsConnected ? "Đã kết nối" : "Polling dự phòng"}
         </span>
 
         <span
@@ -73,7 +77,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </span>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      {!hardwareMode && <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
           type="button"
           className={`btn btn-sm ${isOnline ? "btn-outline" : "btn-primary"}`}
@@ -90,7 +94,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <RefreshCw size={14} />
           Đồng bộ trạng thái
         </button>
-      </div>
+      </div>}
     </div>
   );
 };

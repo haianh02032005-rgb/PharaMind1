@@ -90,6 +90,7 @@ export interface DigitalTwinCompartment {
   label?: string | null;
   status: CompartmentStatusType | string;
   is_open: boolean;
+  led_state?: "ON" | "OFF";
   medication: DigitalTwinMedicationSummary | null;
   members: DigitalTwinMemberSummary[];
   next_dose: DigitalTwinNextDose | null;
@@ -105,18 +106,18 @@ export interface DigitalTwinSummaryResponse {
 }
 
 /**
- * Maps compartment position (1..9) to glTF 3D node name (drawer_01..drawer_09).
+ * Maps physical box position (1..6) to the 3D node name.
  */
 export function positionToObjectId(position: number): string {
-  const clamped = Math.max(1, Math.min(9, Math.floor(position)));
+  const clamped = Math.max(1, Math.min(6, Math.floor(position)));
   return `drawer_${String(clamped).padStart(2, "0")}`;
 }
 
 /**
- * Maps glTF 3D node name (drawer_01..drawer_09) back to position (1..9).
+ * Maps a 3D drawer node name back to physical box position (1..6).
  */
 export function objectIdToPosition(objectId: string): number | null {
-  const match = /^drawer_0([1-9])$/.exec(objectId.trim());
+  const match = /^drawer_0([1-6])$/.exec(objectId.trim());
   if (!match) return null;
   return Number(match[1]);
 }

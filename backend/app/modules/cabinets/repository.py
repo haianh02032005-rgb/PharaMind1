@@ -95,7 +95,7 @@ class CabinetRepository:
         db: Session,
         *,
         cabinet_id: int,
-        count: int = 9,
+        count: int = 6,
     ) -> list[Compartment]:
         created: list[Compartment] = []
         for pos in range(1, count + 1):

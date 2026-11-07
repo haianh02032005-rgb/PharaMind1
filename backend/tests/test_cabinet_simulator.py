@@ -93,14 +93,14 @@ def test_simulator_online_offline_open_close_inventory_unchanged_and_state_sync(
         catalog_ids.append(med["catalog"]["id"])
 
         client.put(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/medication",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/medication",
             headers={"Authorization": f"Bearer {token}"},
             json={"family_medication_id": med["id"]},
         )
 
         # 1. Open compartment while OFFLINE -> 409 (§38, §85)
         offline_open = client.post(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/open",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/open",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert offline_open.status_code == 409
@@ -116,7 +116,7 @@ def test_simulator_online_offline_open_close_inventory_unchanged_and_state_sync(
 
         # 3. Open compartment 8 -> is_open=true, status=OPEN (§36, §86)
         open_res = client.post(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/open",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/open",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert open_res.status_code == 200
@@ -125,7 +125,7 @@ def test_simulator_online_offline_open_close_inventory_unchanged_and_state_sync(
 
         # 4. Close compartment 8 -> is_open=false, status=AVAILABLE (§37, §87)
         close_res = client.post(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/close",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/close",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert close_res.status_code == 200
@@ -142,7 +142,7 @@ def test_simulator_online_offline_open_close_inventory_unchanged_and_state_sync(
         # 6. State Sync: mutate simulator raw state (position 8 open) and call /simulator/sync (§54, §92)
         hardware_simulator.set_raw_compartment_state(
             cab_id,
-            8,
+            6,
             is_open=True,
             cabinet_status="ONLINE",
         )
@@ -153,7 +153,7 @@ def test_simulator_online_offline_open_close_inventory_unchanged_and_state_sync(
         assert sync_res.status_code == 200
         state_data = sync_res.json()
         comp_8_state = next(
-            c for c in state_data["compartments"] if c["position"] == 8
+            c for c in state_data["compartments"] if c["position"] == 6
         )
         assert comp_8_state["is_open"] is True
         assert comp_8_state["status"] == "OPEN"

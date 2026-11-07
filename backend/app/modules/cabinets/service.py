@@ -151,7 +151,7 @@ class CabinetService:
         self.repository.create_compartments(
             db,
             cabinet_id=created.id,
-            count=9,
+            count=6,
         )
         db.commit()
         db.refresh(created)

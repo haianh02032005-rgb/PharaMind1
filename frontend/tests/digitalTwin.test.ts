@@ -33,7 +33,7 @@ function buildMockDigitalTwinSummary(): DigitalTwinSummaryResponse {
       dose_amount: 1,
       dose_unit: "TABLET",
     },
-    compartments: Array.from({ length: 9 }, (_, idx) => {
+    compartments: Array.from({ length: 6 }, (_, idx) => {
       const pos = idx + 1;
       if (pos === 1) {
         return {
@@ -83,12 +83,12 @@ function buildMockDigitalTwinSummary(): DigitalTwinSummaryResponse {
           allergy_alerts: [],
         };
       }
-      if (pos === 8) {
+      if (pos === 6) {
         return {
-          id: 8,
-          position: 8,
-          object_id: "drawer_08",
-          label: "Ngăn 8",
+          id: 6,
+          position: 6,
+          object_id: "drawer_06",
+          label: "Ngăn 6",
           status: "AVAILABLE",
           is_open: false,
           medication: {
@@ -147,8 +147,8 @@ describe("Task 10 — Digital Twin 3D Unit & Integration Tests", () => {
     useDigitalTwinStore.getState().reset();
   });
 
-  it("Test Case 1 (§68): maps compartment position 1..9 <-> drawer_01..drawer_09 accurately", () => {
-    for (let pos = 1; pos <= 9; pos++) {
+  it("Test Case 1 (§68): maps physical boxes 1..6 accurately", () => {
+    for (let pos = 1; pos <= 6; pos++) {
       const objId = positionToObjectId(pos);
       expect(objId).toBe(`drawer_0${pos}`);
       expect(objectIdToPosition(objId)).toBe(pos);
@@ -160,16 +160,16 @@ describe("Task 10 — Digital Twin 3D Unit & Integration Tests", () => {
     expect(dosageFormToPlaceholderType("SACHET")).toBe("BLISTER");
   });
 
-  it("Test Case 2 (§69): selects compartment 8 and returns its medication, member, and allergy alert details", () => {
+  it("Test Case 2 (§69): selects compartment 6 and returns its medication, member, and allergy alert details", () => {
     const store = useDigitalTwinStore.getState();
     store.setDigitalTwinData(buildMockDigitalTwinSummary());
-    store.selectCompartment(8);
+    store.selectCompartment(6);
 
     const updated = useDigitalTwinStore.getState();
     const selected = selectSelectedCompartment(updated);
     expect(selected).not.toBeNull();
-    expect(selected?.position).toBe(8);
-    expect(selected?.object_id).toBe("drawer_08");
+    expect(selected?.position).toBe(6);
+    expect(selected?.object_id).toBe("drawer_06");
     expect(selected?.medication?.name).toBe("Amoxicillin");
     expect(selected?.allergy_alerts).toHaveLength(1);
     expect(selected?.allergy_alerts[0].substance).toBe("Amoxicillin");
@@ -187,12 +187,12 @@ describe("Task 10 — Digital Twin 3D Unit & Integration Tests", () => {
       family_id: 1,
       cabinet_id: 10,
       occurred_at: "2026-11-01T09:00:00Z",
-      payload: { position: 8, is_open: true },
+      payload: { position: 6, is_open: true },
     });
 
     let comp8 = useDigitalTwinStore
       .getState()
-      .compartments.find((c) => c.position === 8);
+      .compartments.find((c) => c.position === 6);
     expect(comp8?.is_open).toBe(true);
     expect(comp8?.status).toBe("OPEN");
     expect(computeDrawerTargetZ(baseZ, true)).toBeGreaterThan(baseZ);
@@ -202,12 +202,12 @@ describe("Task 10 — Digital Twin 3D Unit & Integration Tests", () => {
       family_id: 1,
       cabinet_id: 10,
       occurred_at: "2026-11-01T09:01:00Z",
-      payload: { position: 8, is_open: false },
+      payload: { position: 6, is_open: false },
     });
 
     comp8 = useDigitalTwinStore
       .getState()
-      .compartments.find((c) => c.position === 8);
+      .compartments.find((c) => c.position === 6);
     expect(comp8?.is_open).toBe(false);
     expect(comp8?.status).toBe("AVAILABLE");
   });
@@ -274,16 +274,37 @@ describe("Task 10 — Digital Twin 3D Unit & Integration Tests", () => {
     expect(vis.badgeLabel).toBe("Ngăn trống");
   });
 
-  it("Test Case 7: builds 3D scene graph with required nodes cabinet_body, top_screen, handle, and drawer_01..drawer_09", () => {
+  it("Test Case 7: builds 3D scene graph with six drawers", () => {
     const graph = buildPharmaMindCabinetScene();
     expect(graph.root.getObjectByName("cabinet_body")).toBeDefined();
     expect(graph.root.getObjectByName("top_screen")).toBeDefined();
     expect(graph.root.getObjectByName("handle")).toBeDefined();
-    for (let pos = 1; pos <= 9; pos++) {
+    for (let pos = 1; pos <= 6; pos++) {
       const nodeName = positionToObjectId(pos);
       expect(graph.root.getObjectByName(nodeName)).toBeDefined();
       expect(graph.drawers.get(pos)?.objectId).toBe(nodeName);
     }
+    expect(graph.drawers.size).toBe(6);
+    expect(graph.root.getObjectByName("drawer_07")).toBeUndefined();
+  });
+
+  it("applies Pi sensor data over cached backend state and resynchronizes after reconnect", () => {
+    const store = useDigitalTwinStore.getState();
+    store.setDigitalTwinData(buildMockDigitalTwinSummary());
+    const closed = Object.fromEntries(Array.from({ length: 6 }, (_, i) => [
+      String(i + 1), { status: "CLOSED" as const, led_state: "OFF" as const },
+    ]));
+    store.applyHardwareState({ connected: true, boxes: closed });
+    store.applyHardwareState({ connected: true, boxes: {
+      ...closed, "2": { status: "OPEN", led_state: "ON" },
+    } });
+    expect(useDigitalTwinStore.getState().compartments[1].is_open).toBe(true);
+    expect(useDigitalTwinStore.getState().compartments[1].led_state).toBe("ON");
+    store.setDigitalTwinData(buildMockDigitalTwinSummary());
+    expect(useDigitalTwinStore.getState().compartments[1].is_open).toBe(true);
+    store.applyHardwareState({ connected: false, boxes: null });
+    store.applyHardwareState({ connected: true, boxes: closed });
+    expect(useDigitalTwinStore.getState().compartments[1].is_open).toBe(false);
   });
 });
 

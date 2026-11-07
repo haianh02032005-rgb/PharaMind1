@@ -4,8 +4,8 @@ Provides an automated, rich initial dataset:
 - Demo User: demo@pharmamind.vn / DemoPass123!
 - Family: Gia đình Kiểu mẫu PharmaMind
 - 3 Family Members with realistic HealthProfiles, medical conditions, and allergies
-- 1 Smart Cabinet (PM-CAB-DEMO-01) with 9 compartments fully configured
-- 9 Family Medications mapped to the 9 compartments
+- 1 Smart Cabinet (PM-CAB-DEMO-01) with 6 compartments fully configured
+- 9 Family Medications, 6 mapped to the physical compartments
 - Active Prescriptions and Medication Schedules with daily times (08:00, 20:00)
 - Allergy warning trigger: Amoxicillin in compartment 4 vs Penicillin/Amoxicillin allergy of Member 1
 
@@ -306,13 +306,13 @@ def seed_demo_data(
         device_code="PM-CAB-DEMO-01",
         status="ONLINE",
         hardware_mode="SIMULATED",
-        notes="Tủ thuốc 9 ngăn Digital Twin 3D đang kết nối bộ giả lập phần kéo mở ngăn thời gian thực.",
+        notes="Tủ thuốc 6 hộp Digital Twin 3D đang kết nối bộ giả lập phần kéo mở ngăn thời gian thực.",
         last_seen_at=datetime.now(timezone.utc),
     )
     db.add(cabinet)
     db.flush()
 
-    # 6. Catalog Medications (9 items for 9 compartments)
+    # 6. Catalog Medications (9 items, first 6 assigned to physical boxes)
     med_specs = [
         # (pos, name, active_ingredient, strength, form, qty, unit, exp_date, threshold, note)
         (1, "Paracetamol 500mg", "Paracetamol", "500mg", "TABLET", 18.0, "tablet", date(2028, 12, 31), 5.0, "Hạ sốt, giảm đau nhanh sau ăn"),
@@ -367,8 +367,8 @@ def seed_demo_data(
     db.add(MemberMedication(member_id=member_kiet.id, family_medication_id=fam_med_by_pos[5].id))
     db.flush()
 
-    # 7. 9 Compartments assigned
-    for pos in range(1, 10):
+    # 7. Six physical compartments assigned
+    for pos in range(1, 7):
         fm = fam_med_by_pos.get(pos)
         comp = Compartment(
             cabinet_id=cabinet.id,
@@ -471,7 +471,7 @@ def seed_demo_data(
         print(f"       Password: {DEMO_PASSWORD}")
         try:
             print(f"       Family  : {family.name}")
-            print(f"       Cabinet : {cabinet.name} (9/9 compartments mapped)")
+            print(f"       Cabinet : {cabinet.name} (6/6 compartments mapped)")
         except UnicodeEncodeError:
             print(f"       Family ID : {family.id}")
             print(f"       Cabinet ID: {cabinet.id}")

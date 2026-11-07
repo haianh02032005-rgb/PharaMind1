@@ -50,6 +50,7 @@ build/
 /frontend/dist/
 /desktop/node_modules/
 /desktop/dist/
+/desktop/web/
 /deploy/*/node_modules/
 /deploy/*/.wrangler/
 /deploy/*/worker-configuration.d.ts

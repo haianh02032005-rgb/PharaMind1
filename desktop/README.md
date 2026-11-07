@@ -1,7 +1,7 @@
 # PharmaMind AI Desktop
 
-Windows and Linux desktop shell for the public PharmaMind AI service. It packages a
-locked-down Electron browser and opens:
+Desktop application for PharmaMind AI. Windows and Linux x64 open the public
+service in a locked-down Electron browser:
 
 `https://pharmamind-ai-demo.onrender.com`
 
@@ -49,10 +49,14 @@ connect to the public PharmaMind service over HTTPS.
 ## Raspberry Pi 5
 
 Raspberry Pi 5 requires a 64-bit operating system with a graphical desktop.
-Build the native ARM64 packages on an ARM64 Linux host with:
+Build the native ARM64 packages on an ARM64 Linux host after building the
+frontend:
 
 ```bash
 npm ci
+npm ci --prefix ../frontend
+npm run build --prefix ../frontend
+npm run prepare:pi
 npm run dist:linux:arm64
 ```
 
@@ -67,3 +71,13 @@ The ARM64 AppImage is the portable alternative. Raspberry Pi OS Lite is not
 supported because the application requires a graphical session. On ARM64,
 Electron automatically selects Wayland or X11 and allows a smaller minimum
 window size for Raspberry Pi displays.
+
+The Raspberry Pi build bundles the six-box web interface into the installer.
+It serves that interface on `127.0.0.1:18765` and proxies authenticated API
+requests to the public Render backend. The Electron main process alone opens
+`ws://127.0.0.1:8000/ws` and forwards validated `INIT_SYSTEM` and
+`SENSOR_TRIGGER` states to the interface. `UNLOCK_BOX` has a global 2.5-second
+cooldown; `SET_LED` is limited to boxes 1–6. No app code accesses GPIO directly.
+
+The Pi service must already be installed and listening on port 8000. If it is
+unavailable, the app displays a disconnected state and reconnects automatically.

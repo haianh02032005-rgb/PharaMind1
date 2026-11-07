@@ -69,7 +69,7 @@ def _cleanup(
 
 
 def test_digital_twin_summary_endpoint_with_schedules_warnings_and_allergies():
-    """TASK 10 §29–32, §53–56: Digital Twin summary returns 9 compartments, assigned medications, member schedules, next_dose_position, warnings, and allergy alerts."""
+    """Digital Twin returns six compartments with medications, schedules and alerts."""
     user_id, _, token = _create_user_and_token("dt_summary")
     family_ids: list[int] = []
     catalog_ids: list[int] = []
@@ -202,7 +202,7 @@ def test_digital_twin_summary_endpoint_with_schedules_warnings_and_allergies():
             json={"family_medication_id": med_para["id"]},
         )
         client.put(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/medication",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/medication",
             headers={"Authorization": f"Bearer {token}"},
             json={"family_medication_id": med_amox["id"]},
         )
@@ -219,7 +219,7 @@ def test_digital_twin_summary_endpoint_with_schedules_warnings_and_allergies():
         assert data["cabinet"]["name"] == "Tủ thuốc phòng khách"
         assert data["next_dose_position"] == 1
         assert data["next_dose"] is not None
-        assert len(data["compartments"]) == 9
+        assert len(data["compartments"]) == 6
 
         comp_1 = data["compartments"][0]
         assert comp_1["position"] == 1
@@ -230,9 +230,9 @@ def test_digital_twin_summary_endpoint_with_schedules_warnings_and_allergies():
         assert comp_1["members"][0]["full_name"] == "Nguyễn Thị Lan"
         assert comp_1["members"][0]["schedules"][0]["times"] == ["08:00", "20:00"]
 
-        comp_8 = data["compartments"][7]
-        assert comp_8["position"] == 8
-        assert comp_8["object_id"] == "drawer_08"
+        comp_8 = data["compartments"][5]
+        assert comp_8["position"] == 6
+        assert comp_8["object_id"] == "drawer_06"
         assert comp_8["medication"]["id"] == med_amox["id"]
         assert "ALLERGY_RISK" in comp_8["warnings"]
         assert len(comp_8["allergy_alerts"]) == 1
@@ -264,12 +264,12 @@ def test_digital_twin_summary_endpoint_with_schedules_warnings_and_allergies():
         assert r1["members"][0]["next_schedule"] is not None
 
         reveal_8 = client.get(
-            f"/families/{fam_id}/cabinets/{cab_id}/compartments/8/reveal",
+            f"/families/{fam_id}/cabinets/{cab_id}/compartments/6/reveal",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert reveal_8.status_code == 200
         r8 = reveal_8.json()
-        assert r8["position"] == 8
+        assert r8["position"] == 6
         assert any(w["type"] == "ALLERGY_WARNING" for w in r8["warnings"])
 
         reveal_empty = client.get(
