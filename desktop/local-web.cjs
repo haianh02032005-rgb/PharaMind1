@@ -13,6 +13,7 @@ const MIME = {
   ".glb": "model/gltf-binary",
 };
 const API_PREFIXES = ["/auth", "/users", "/families", "/imports", "/health"];
+const UPSTREAM_TIMEOUT_MS = 180_000;
 
 async function startLocalWebServer(webRoot, backendOrigin, preferredPort = 18765) {
   const root = path.resolve(webRoot);
@@ -51,10 +52,20 @@ async function startLocalWebServer(webRoot, backendOrigin, preferredPort = 18765
           method: request.method,
           headers,
           body: body.length ? body : undefined,
-          signal: AbortSignal.timeout(60000),
+          signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
         });
+        const upstreamContentType = upstream.headers.get("content-type") || "";
+        if (upstream.status === 503 && upstreamContentType.includes("text/html")) {
+          response.writeHead(503, {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+            "retry-after": "60",
+          });
+          response.end(JSON.stringify({ detail: "Máy chủ PharmaMind đang khởi động sau thời gian không hoạt động. Hãy đợi khoảng 1 phút rồi thử lại." }));
+          return;
+        }
         const responseHeaders = {
-          "content-type": upstream.headers.get("content-type") || "application/octet-stream",
+          "content-type": upstreamContentType || "application/octet-stream",
           "cache-control": "no-store",
         };
         if (upstream.headers.get("content-disposition")) {
@@ -62,9 +73,18 @@ async function startLocalWebServer(webRoot, backendOrigin, preferredPort = 18765
         }
         response.writeHead(upstream.status, responseHeaders);
         response.end(Buffer.from(await upstream.arrayBuffer()));
-      } catch {
-        response.writeHead(502, { "content-type": "application/json" });
-        response.end(JSON.stringify({ detail: "Không thể kết nối máy chủ PharmaMind" }));
+      } catch (error) {
+        const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+        response.writeHead(timedOut ? 504 : 502, {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          ...(timedOut ? { "retry-after": "60" } : {}),
+        });
+        response.end(JSON.stringify({
+          detail: timedOut
+            ? "Kết nối tới máy chủ PharmaMind quá thời gian chờ. Máy chủ miễn phí có thể đang khởi động; hãy đợi 1–2 phút rồi thử lại."
+            : "Không kết nối được tới máy chủ PharmaMind. Hãy kiểm tra Wi-Fi hoặc Internet trên Raspberry Pi rồi thử lại.",
+        }));
       }
       return;
     }

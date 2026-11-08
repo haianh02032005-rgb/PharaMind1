@@ -1,6 +1,6 @@
 {
   "name": "pharmamind-ai-desktop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "PharmaMind AI desktop application for Windows and Linux",
   "desktopName": "pharmamind-ai.desktop",
   "main": "main.cjs",
