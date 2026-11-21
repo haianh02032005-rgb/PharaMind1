@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ExternalLink, MapPin, Navigation, Phone, RefreshCw } from "lucide-react";
 import { Coordinates, directionsUrl, findAddress, findNearbyPharmacies, nearbySearchUrl, Pharmacy } from "../../features/pharmacies/search";
+import { LONG_CHAU_HAUI, LONG_CHAU_HOTLINE, verifiedDirectionsUrl } from "../../features/pharmacies/longChauHaui";
 
 export const NearbyPharmaciesPage: React.FC = () => {
   const [origin, setOrigin] = useState<Coordinates | null>(null);
@@ -104,6 +105,34 @@ export const NearbyPharmaciesPage: React.FC = () => {
           </article>
         ))}
       </div>
+      <section style={{ display: "grid", gap: 12 }} aria-labelledby="long-chau-haui-heading">
+        <div>
+          <h2 id="long-chau-haui-heading" style={{ fontSize: "1.24rem" }}>Long Châu quanh ĐH Công nghiệp Hà Nội, cơ sở 1</h2>
+          <p style={{ color: "var(--pm-text-secondary)" }}>
+            Địa chỉ từ trang chính thức của Long Châu. Số 1800 6928 là tổng đài chung, không phải số riêng từng cửa hàng.
+          </p>
+        </div>
+        <div className="pharmacy-list">
+          {LONG_CHAU_HAUI.map((store) => (
+            <article className="card pharmacy-card" key={store.id}>
+              <div>
+                <h3 style={{ fontSize: "1.08rem" }}>{store.name}</h3>
+                <p><MapPin size={16} aria-hidden="true" /> {store.address}</p>
+                <p><Phone size={16} aria-hidden="true" /> Tổng đài Long Châu: {LONG_CHAU_HOTLINE}</p>
+              </div>
+              <div className="pharmacy-actions">
+                <a className="btn btn-outline" href="tel:18006928"><Phone size={16} /> Gọi tổng đài</a>
+                <a className="btn btn-primary" href={verifiedDirectionsUrl(store.address, origin ?? undefined)} target="_blank" rel="noopener noreferrer">
+                  <Navigation size={16} /> Chỉ đường
+                </a>
+                <a className="btn btn-outline" href={store.sourceUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink size={16} /> Trang cửa hàng
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
       <small style={{ color: "var(--pm-text-secondary)" }}>
         Dữ liệu địa điểm © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
         Thông tin địa chỉ, số điện thoại có thể chưa đầy đủ; hãy xác nhận trước khi đến.
