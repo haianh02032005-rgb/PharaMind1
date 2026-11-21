@@ -15,6 +15,7 @@ const CabinetPage = lazy(() => import("../pages/cabinet/CabinetPage").then((m) =
 const DigitalTwinPage = lazy(() => import("../pages/digital-twin/DigitalTwinPage").then((m) => ({ default: m.DigitalTwinPage })));
 const AiPharmacistPage = lazy(() => import("../pages/ai/AiPharmacistPage").then((m) => ({ default: m.AiPharmacistPage })));
 const SettingsPage = lazy(() => import("../pages/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const NearbyPharmaciesPage = lazy(() => import("../pages/pharmacies/NearbyPharmaciesPage").then((m) => ({ default: m.NearbyPharmaciesPage })));
 const ImportPrescriptionPage = lazy(() => import("../pages/import-prescription/ImportPrescriptionPage").then((m) => ({ default: m.ImportPrescriptionPage })));
 
 export const AppRouter: React.FC = () => {
@@ -37,6 +38,7 @@ export const AppRouter: React.FC = () => {
             <Route path="/cabinet" element={<CabinetPage />} />
             <Route path="/digital-twin" element={<DigitalTwinPage />} />
             <Route path="/ai" element={<AiPharmacistPage />} />
+            <Route path="/pharmacies" element={<NearbyPharmaciesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>

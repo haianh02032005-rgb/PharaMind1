@@ -10,6 +10,7 @@ import {
   FileUp,
   Home,
   LogOut,
+  MapPin,
   Pill,
   Settings,
   Users,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { to: "/cabinet", label: "Tủ thuốc thông minh", icon: Box },
   { to: "/digital-twin", label: "Digital Twin 3D", icon: Activity },
   { to: "/ai", label: "Trợ lý AI Dược sĩ", icon: Bot },
+  { to: "/pharmacies", label: "Nhà thuốc gần bạn", icon: MapPin },
   { to: "/settings", label: "Cài đặt", icon: Settings },
 ];
 
@@ -38,6 +40,7 @@ const MOBILE_TABS = [
   { to: "/schedules", label: "Lịch uống", icon: CalendarClock },
   { to: "/cabinet", label: "Tủ thuốc", icon: Box },
   { to: "/family", label: "Gia đình", icon: Users },
+  { to: "/pharmacies", label: "Nhà thuốc", icon: MapPin },
 ];
 
 export const AppShell: React.FC = () => {

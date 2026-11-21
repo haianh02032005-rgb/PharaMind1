@@ -219,8 +219,13 @@ app.whenReady().then(async () => {
   session.fromPartition("persist:pharmamind").setPermissionRequestHandler(
     (_webContents, permission, callback, details) => {
       const trustedOrigin = isAllowedPharmaMindUrl(details.requestingUrl);
-      callback(trustedOrigin && (permission === "media" || permission === "notifications"));
+      callback(trustedOrigin && (permission === "media" || permission === "notifications" || permission === "geolocation"));
     },
+  );
+  session.fromPartition("persist:pharmamind").setPermissionCheckHandler(
+    (_webContents, permission, requestingOrigin) =>
+      isAllowedPharmaMindUrl(requestingOrigin) &&
+      (permission === "media" || permission === "notifications" || permission === "geolocation"),
   );
 
   createWindow();
