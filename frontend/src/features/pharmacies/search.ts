@@ -19,6 +19,11 @@ type OsmElement = {
   tags?: Record<string, string>;
 };
 
+type PhotonFeature = {
+  properties?: Record<string, string | number>;
+  geometry?: { coordinates?: number[] };
+};
+
 const ENDPOINTS = [
   "https://overpass.private.coffee/api/interpreter",
   "https://overpass-api.de/api/interpreter",
@@ -42,6 +47,30 @@ function addressFromTags(tags: Record<string, string>): string | null {
   return address || tags["addr:full"] || null;
 }
 
+async function findPhotonPharmacies(origin: Coordinates): Promise<Pharmacy[]> {
+  const params = new URLSearchParams({ q: "pharmacy", lat: String(origin.latitude), lon: String(origin.longitude), limit: "50" });
+  const response = await fetch(`https://photon.komoot.io/api/?${params}`, { signal: AbortSignal.timeout(15_000) });
+  if (!response.ok) throw new Error("Dịch vụ bản đồ đang bận.");
+  const data = await response.json() as { features?: PhotonFeature[] };
+  return (data.features ?? []).flatMap((feature) => {
+    const point = feature.geometry?.coordinates;
+    const properties = feature.properties ?? {};
+    if (!point || point.length < 2 || properties.osm_value !== "pharmacy") return [];
+    const [longitude, latitude] = point;
+    const distance = distanceKm(origin, { latitude, longitude });
+    if (!Number.isFinite(distance) || distance > RADIUS_METERS / 1000) return [];
+    const address = [properties.housenumber, properties.street, properties.district, properties.city]
+      .filter(Boolean).join(", ");
+    return [{
+      id: `photon-${properties.osm_type}-${properties.osm_id}`,
+      name: String(properties.name || "Nhà thuốc"),
+      latitude, longitude, distanceKm: distance,
+      address: address || null,
+      phone: typeof properties.phone === "string" ? properties.phone : null,
+    }];
+  }).sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 30);
+}
+
 export async function findNearbyPharmacies(origin: Coordinates): Promise<Pharmacy[]> {
   if (!Number.isFinite(origin.latitude) || !Number.isFinite(origin.longitude) ||
       Math.abs(origin.latitude) > 90 || Math.abs(origin.longitude) > 180) {
@@ -59,7 +88,7 @@ export async function findNearbyPharmacies(origin: Coordinates): Promise<Pharmac
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(12_000),
       });
       if (response.ok) {
         data = await response.json() as { elements?: OsmElement[] };
@@ -70,7 +99,11 @@ export async function findNearbyPharmacies(origin: Coordinates): Promise<Pharmac
       // Try the other public instance if this one is unavailable.
     }
   }
-  if (!data) throw new Error("Dịch vụ bản đồ đang bận. Hãy thử lại sau hoặc mở Google Maps.");
+  if (!data) {
+    const fallback = await findPhotonPharmacies(origin);
+    cache.set(key, { time: Date.now(), items: fallback });
+    return fallback;
+  }
   if (!Array.isArray(data.elements)) throw new Error("Dữ liệu nhà thuốc chưa sẵn sàng.");
   const items = data.elements.flatMap((element) => {
     const latitude = element.lat ?? element.center?.lat;
