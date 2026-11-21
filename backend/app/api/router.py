@@ -14,10 +14,17 @@ from backend.app.modules.imports.router import (
 from backend.app.modules.medications.router import router as medications_router
 from backend.app.modules.members.router import router as members_router
 from backend.app.modules.prescriptions.router import router as prescriptions_router
+from backend.app.modules.pharmacies.router import router as pharmacies_router
 from backend.app.modules.schedules.router import router as schedules_router
 
 
 api_router = APIRouter()
+
+api_router.include_router(
+    pharmacies_router,
+    prefix="/pharmacies",
+    tags=["Pharmacies"],
+)
 
 api_router.include_router(
     auth_router,

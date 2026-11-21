@@ -1,7 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ExternalLink, MapPin, Navigation, Phone, RefreshCw } from "lucide-react";
 import { Coordinates, directionsUrl, findAddress, findNearbyPharmacies, nearbySearchUrl, Pharmacy } from "../../features/pharmacies/search";
 import { LONG_CHAU_HAUI, LONG_CHAU_HOTLINE, verifiedDirectionsUrl } from "../../features/pharmacies/longChauHaui";
+import type { VerifiedPharmacy } from "../../features/pharmacies/longChauHaui";
+import { apiRequest } from "../../services/apiClient";
+
+type CuratedPharmacyResponse = {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  phone_kind: string;
+  source_url: string;
+};
 
 export const NearbyPharmaciesPage: React.FC = () => {
   const [origin, setOrigin] = useState<Coordinates | null>(null);
@@ -9,6 +20,28 @@ export const NearbyPharmaciesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [address, setAddress] = useState("");
+  const [longChauStores, setLongChauStores] = useState<VerifiedPharmacy[]>(LONG_CHAU_HAUI);
+
+  useEffect(() => {
+    let active = true;
+    void apiRequest<CuratedPharmacyResponse[]>("/pharmacies/curated")
+      .then((stores) => {
+        if (active && stores.length) {
+          setLongChauStores(stores.map((store) => ({
+            id: store.id,
+            name: store.name,
+            address: store.address,
+            phone: store.phone,
+            phoneKind: store.phone_kind === "chain_hotline" ? "chain_hotline" : undefined,
+            sourceUrl: store.source_url,
+          })));
+        }
+      })
+      .catch(() => {
+        // The bundled list remains available when the server is offline.
+      });
+    return () => { active = false; };
+  }, []);
 
   const searchAt = async (position: Coordinates) => {
     setOrigin(position);
@@ -113,15 +146,15 @@ export const NearbyPharmaciesPage: React.FC = () => {
           </p>
         </div>
         <div className="pharmacy-list">
-          {LONG_CHAU_HAUI.map((store) => (
+          {longChauStores.map((store) => (
             <article className="card pharmacy-card" key={store.id}>
               <div>
                 <h3 style={{ fontSize: "1.08rem" }}>{store.name}</h3>
                 <p><MapPin size={16} aria-hidden="true" /> {store.address}</p>
-                <p><Phone size={16} aria-hidden="true" /> Tổng đài Long Châu: {LONG_CHAU_HOTLINE}</p>
+                <p><Phone size={16} aria-hidden="true" /> Tổng đài Long Châu: {store.phone ?? LONG_CHAU_HOTLINE}</p>
               </div>
               <div className="pharmacy-actions">
-                <a className="btn btn-outline" href="tel:18006928"><Phone size={16} /> Gọi tổng đài</a>
+                <a className="btn btn-outline" href={`tel:${(store.phone ?? LONG_CHAU_HOTLINE).replace(/\D/g, "")}`}><Phone size={16} /> Gọi tổng đài</a>
                 <a className="btn btn-primary" href={verifiedDirectionsUrl(store.address, origin ?? undefined)} target="_blank" rel="noopener noreferrer">
                   <Navigation size={16} /> Chỉ đường
                 </a>

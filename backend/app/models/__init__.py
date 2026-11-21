@@ -2,6 +2,7 @@ from backend.app.models.allergy_profile import AllergyProfile
 from backend.app.models.cabinet import Cabinet
 from backend.app.models.cabinet_event import CabinetEvent
 from backend.app.models.compartment import Compartment
+from backend.app.models.curated_pharmacy import CuratedPharmacy
 from backend.app.models.drug_reaction_history import DrugReactionHistory
 from backend.app.models.emergency_contact import EmergencyContact
 from backend.app.models.family import Family
@@ -28,6 +29,7 @@ __all__ = [
     "Cabinet",
     "CabinetEvent",
     "Compartment",
+    "CuratedPharmacy",
     "DrugReactionHistory",
     "EmergencyContact",
     "Family",

@@ -6,6 +6,8 @@ export type VerifiedPharmacy = {
   id: string;
   name: string;
   address: string;
+  phone?: string;
+  phoneKind?: "chain_hotline";
   sourceUrl: string;
 };
 
